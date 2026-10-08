@@ -1,12 +1,43 @@
-import os
+import Observation
+import Sparkle
 
 @MainActor
 final class Updater {
-    private let logger = Logger(subsystem: "com.daughhetee.Readout", category: "updates")
-
-    var settings: UpdaterSettings? { nil }
+    private let controller = SPUStandardUpdaterController(
+        startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
+    private(set) lazy var settings: UpdaterSettings? = UpdaterSettings(updater: controller.updater)
 
     func checkForUpdates() {
-        logger.info("update checks are not wired up yet")
+        controller.checkForUpdates(nil)
+    }
+}
+
+@MainActor
+@Observable
+final class UpdaterSettings {
+    private let updater: SPUUpdater
+    private var checks: Bool
+    private var downloads: Bool
+
+    var automaticallyChecks: Bool {
+        get { checks }
+        set {
+            checks = newValue
+            updater.automaticallyChecksForUpdates = newValue
+        }
+    }
+
+    var automaticallyDownloads: Bool {
+        get { downloads }
+        set {
+            downloads = newValue
+            updater.automaticallyDownloadsUpdates = newValue
+        }
+    }
+
+    init(updater: SPUUpdater) {
+        self.updater = updater
+        checks = updater.automaticallyChecksForUpdates
+        downloads = updater.automaticallyDownloadsUpdates
     }
 }

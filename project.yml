@@ -7,6 +7,9 @@ options:
 packages:
   ReadoutKit:
     path: ReadoutKit
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    exactVersion: 2.10.0
 targets:
   Readout:
     type: application
@@ -20,6 +23,7 @@ targets:
         product: ReadoutSystem
       - package: ReadoutKit
         product: ReadoutCore
+      - package: Sparkle
     info:
       path: App/Info.plist
       properties:
@@ -29,6 +33,11 @@ targets:
         LSUIElement: true
         LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
         NSHumanReadableCopyright: "Copyright © 2026 Jeremy Daughhetee. MIT License."
+        SUFeedURL: https://github.com/jeremywho/readout/releases/latest/download/appcast.xml
+        SUPublicEDKey: $(SPARKLE_PUBLIC_ED_KEY)
+        SUEnableAutomaticChecks: true
+        SUAutomaticallyUpdate: true
+        SUScheduledCheckInterval: 86400
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.daughhetee.Readout
@@ -39,4 +48,5 @@ targets:
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "-"
         DEVELOPMENT_TEAM: ""
+        SPARKLE_PUBLIC_ED_KEY: UXlAI0CxCkFRsUDiosC03FhrWpZG9yOytFi2Hj8ekdw=
     scheme: {}

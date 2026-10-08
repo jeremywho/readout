@@ -63,11 +63,14 @@ struct SettingsView: View {
     }
 }
 
-@MainActor
-@Observable
-final class UpdaterSettings {}
-
 struct UpdatesSection: View {
-    let settings: UpdaterSettings
-    var body: some View { EmptyView() }
+    @Bindable var settings: UpdaterSettings
+
+    var body: some View {
+        Section("Updates") {
+            Toggle("Check for updates automatically", isOn: $settings.automaticallyChecks)
+            Toggle("Download and install updates automatically", isOn: $settings.automaticallyDownloads)
+                .disabled(!settings.automaticallyChecks)
+        }
+    }
 }
