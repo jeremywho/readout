@@ -1,6 +1,7 @@
 import AppKit
 import ReadoutCore
 import ReadoutSystem
+import ServiceManagement
 import SwiftUI
 
 @MainActor
@@ -16,6 +17,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         Preferences.registerDefaults()
+        Preferences.launchAtLoginDefault.perform { try SMAppService.mainApp.register() }
         preferenceFingerprint = preferencesFingerprint()
         reconcileStatusItems()
         applyEnginePreferences()

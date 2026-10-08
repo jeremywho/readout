@@ -76,7 +76,7 @@ A small SwiftUI window, stored in `UserDefaults`:
 - On/off toggle for each item.
 - Temperature unit: °F (default) or °C.
 - Network interface: Automatic (primary) by default, or a specific interface.
-- Launch at login, via `SMAppService.mainApp`.
+- Launch at login, via `SMAppService.mainApp`. Registered automatically on the first launch (as iStat Menus does), once only: if the user turns it off later, it stays off.
 - Update checks: automatic (default on), and whether to download and install automatically (default on).
 
 ## 4. Architecture
