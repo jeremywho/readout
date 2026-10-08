@@ -22,7 +22,7 @@ Readout is a small, open-source macOS menu bar system monitor that replaces the 
 - Fan control or anything else that writes to the SMC (it would need a privileged helper).
 - Weather, time, battery, GPU-as-menu-item, alerts and notifications, desktop widgets, multi-profile settings.
 - The Mac App Store (sandboxing blocks `nettop`, `ps` and IOHID sensor access).
-- Support for macOS older than 15.
+- Support for macOS older than 26 (Tahoe).
 
 ## 2. What it replaces (observed 2026-10-08 on macstudio, iStat Menus 7.30, macOS 26.6.2, M1 Ultra)
 
@@ -99,7 +99,7 @@ Readout/
 ```
 
 - **App bundle and dependencies.** The app is built by Xcode through XcodeGen. That is the conventional path for embedding and signing Sparkle's framework and XPC services under the hardened runtime. Sparkle 2.10.x comes in as a Swift package dependency.
-- **Identifiers.** Bundle id `com.daughhetee.Readout`, deployment target macOS 15.0. The app is an agent (`LSUIElement`) with no Dock icon.
+- **Identifiers.** Bundle id `com.daughhetee.Readout`, deployment target macOS 26.0. That is the oldest version we can test: both dev Macs run 26.6.2 and CI runs on `macos-26`. It also allows Liquid Glass panel styling and current SwiftUI with no availability branches. macOS 27 (Golden Gate, 27.0.1 shipped) is expected to work but is unverified until a Mac or a GitHub runner image is on 27; add `macos-27` to the CI matrix once GitHub publishes it. The app is an agent (`LSUIElement`) with no Dock icon.
 
 ### 4.2 Units and boundaries
 
@@ -259,7 +259,6 @@ README sections: what it shows, install (dmg from Releases), updating, privacy (
 ## 10. Prerequisites outside the repo
 
 1. **Developer ID export.** Export the Developer ID Application identity as a `.p12` from macstudio's login keychain. This may need one GUI "Allow" click in the `hil` session, the same pattern as the hehehe Distribution signing.
-2. **App Store Connect API key.** Reuse the existing team key for notarization.
-   - Recommended later: a dedicated key with only the Developer role, created in the App Store Connect web UI, then swap the secret.
+2. **App Store Connect API key.** Reuse the existing team key, the one already configured in the fastlane `.env` on macstudio, for notarization.
 3. **Sparkle EdDSA key pair.** Generate with Sparkle's `generate_keys` and store in 1Password.
 4. **GitHub repo setup.** Create public repo `jeremywho/readout` with branch protection on `main` (CI required), and an environment `release` restricted to `main`.
