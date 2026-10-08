@@ -2,8 +2,12 @@ import Foundation
 import Security
 
 let arguments = CommandLine.arguments
-guard arguments.count == 3 else {
-    FileHandle.standardError.write(Data("usage: export-developer-id.swift <output.p12> <password>\n".utf8))
+guard arguments.count == 3,
+    let password = try? String(contentsOfFile: arguments[2], encoding: .utf8)
+        .trimmingCharacters(in: .whitespacesAndNewlines),
+    !password.isEmpty
+else {
+    FileHandle.standardError.write(Data("usage: export-developer-id.swift <output.p12> <password-file>\n".utf8))
     exit(2)
 }
 let wanted = "Developer ID Application: Jeremy Daughhetee (PCWH4GSLHZ)"
@@ -23,7 +27,7 @@ for identity in identities {
     guard let certificate, (SecCertificateCopySubjectSummary(certificate) as String?) == wanted else { continue }
     var parameters = SecItemImportExportKeyParameters()
     parameters.version = UInt32(SEC_KEY_IMPORT_EXPORT_PARAMS_VERSION)
-    parameters.passphrase = Unmanaged.passUnretained(arguments[2] as CFString)
+    parameters.passphrase = Unmanaged.passUnretained(password as CFString)
     var data: CFData?
     let status = SecItemExport(identity, .formatPKCS12, [], &parameters, &data)
     guard status == errSecSuccess, let data else {
