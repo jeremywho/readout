@@ -21,7 +21,7 @@ Readout is a small, open-source macOS menu bar system monitor that replaces the 
 
 - Fan control or anything else that writes to the SMC (it would need a privileged helper).
 - Weather, time, battery, GPU-as-menu-item, alerts and notifications, desktop widgets, multi-profile settings.
-- The Mac App Store (sandboxing blocks `nettop`, `ps` and IOHID sensor access).
+- The Mac App Store (sandboxing blocks `nettop`, `ps` and AppleSMC access).
 - Support for macOS older than 26 (Tahoe).
 
 ## 2. What it replaces (observed 2026-10-08 on macstudio, iStat Menus 7.30, macOS 26.6.2, M1 Ultra)
@@ -52,7 +52,7 @@ Each item is its own `NSStatusItem`, so macOS persists ⌘-drag reordering throu
 | Network | Two right-aligned lines, `↑` upload over `↓` download. Monospaced digits, fixed width so the bar never jitters. Units are B/s, KB/s, MB/s and GB/s with decimal (1000) steps, 3 significant digits at most (`999 KB/s` → `1.0 MB/s`), matching iStat's `Network_DataFormat` bytes mode. |
 | CPU temp | 9 pt caption `CPU` over a value such as `126°`. Unit is °F or °C per settings. |
 | Disk | Caption `SSD` over `81%`. |
-| CPU graph | 60 columns at 1 sample/s, each a stacked user (blue) + system (pink) bar, inside a rounded outline. Matches iStat's colors in both appearances. |
+| CPU graph | 20 columns at 1 sample/s (2 pt bars, 1 pt gaps, newest on the right), each a stacked user (blue) + system (pink) bar, inside a rounded outline. Matches iStat's density and colors in both appearances. |
 | Memory | Caption `MEM` over `5%`, followed by a vertical bar filled to the pressure value. The bar turns yellow at 50% and red at 80% pressure. |
 
 Text and outlines follow the menu bar's effective appearance (light or dark), and redraw when it changes.
@@ -65,7 +65,7 @@ Clicking an item opens an `NSPopover` hosting SwiftUI. Every panel ends with a f
 |---|---|
 | Network | Primary interface name and type (Wi-Fi/Ethernet/other). Local IPv4/IPv6. Public IP, fetched on open from `https://api.ipify.org` and cached for 5 minutes. Up/down history graph covering the last 10 minutes. Session totals since launch. Top 5 processes by bandwidth from `nettop`, sampled every 2 s while open. |
 | CPU temp | CPU-cluster average, GPU average, hottest sensor (name + value), fan RPM. Fan RPM is omitted on fanless Macs. |
-| Disk | Used / free / total for the boot volume. Read/write throughput. |
+| Disk | Used / free / total for the boot volume. Read/write throughput summed across all block storage devices. |
 | CPU | Total, user and system %. Per-core bars, grouped into performance and efficiency cores. Load averages. Top 5 processes by CPU from `ps`. |
 | Memory | Pressure %. Used, wired, compressed and cached memory. Swap used. Top 5 processes by resident memory from `ps`. |
 
@@ -85,14 +85,16 @@ A small SwiftUI window, stored in `UserDefaults`:
 
 ```
 Readout/
-  Package.swift                 SwiftPM: ReadoutCore, ReadoutSystem, readout-probe, tests
-  Sources/ReadoutCore/          pure logic, no OS calls
-  Sources/ReadoutSystem/        samplers that read the OS
-  Sources/readout-probe/        CLI: prints every metric once per second
+  ReadoutKit/                   SwiftPM package (kept out of the repo root so Xcode does not treat the root as a package)
+    Package.swift
+    Sources/ReadoutCore/        pure logic, no OS calls
+    Sources/CReadout/           C shim: sysctl, mach, IOKit and AppleSMC calls
+    Sources/ReadoutSystem/      samplers that read the OS through CReadout and Foundation
+    Sources/readout-probe/      CLI: prints every metric once per second
+    Tests/ReadoutCoreTests/
+    Tests/ReadoutSystemTests/
   App/                          AppKit/SwiftUI app target (status items, panels, settings, Sparkle)
   project.yml                   XcodeGen spec for the app; the .xcodeproj is generated, not committed
-  Tests/ReadoutCoreTests/
-  Tests/ReadoutSystemTests/
   scripts/                      build, sign, notarize, screenshot, appcast helpers
   .github/workflows/            ci.yml, release.yml
   docs/images/                  README screenshots
@@ -104,7 +106,7 @@ Readout/
 ### 4.2 Units and boundaries
 
 - **ReadoutCore** is pure. It contains:
-  - counter-delta math (32/64-bit wrap and counter reset → 0, never a spike)
+  - counter-delta math: 64-bit byte counters treat a decrease (reset, interface re-created) as 0, never a spike; 32-bit CPU tick counters use wrapping subtraction
   - rate computation over a monotonic elapsed time
   - byte-rate and percent formatters
   - CPU tick-ratio math
@@ -112,12 +114,12 @@ Readout/
   - disk-usage math
   - a fixed-capacity ring buffer for history
   - temperature unit conversion
-  - IOHID/SMC sensor name classification (which sensors count as CPU, GPU, etc.)
+  - SMC value decoding and temperature-key classification (which keys count as CPU, GPU)
 
   Everything is unit-tested with recorded fixtures.
-- **ReadoutSystem** holds one sampler per metric behind `protocol Sampler { associatedtype Reading; func sample() -> Reading? }`. Samplers own the OS calls and nothing else. A failed read returns `nil` and logs through `os.Logger` (subsystem `com.daughhetee.Readout`).
+- **ReadoutSystem** holds one sampler class per metric, all owned by a `SamplingEngine` actor whose `tick()` returns a `Sendable` `MetricsSnapshot`. Samplers own the OS calls and nothing else; the stateful ones take their OS sources as injectable closures so tests can drive them. A failed read returns `nil` and logs through `os.Logger` (subsystem `com.daughhetee.Readout`).
 - **App** layer:
-  - `MetricsStore`, an `@MainActor @Observable` class. One 1 Hz `DispatchSourceTimer` ticks every sampler on a background queue and publishes readings and histories to the main actor.
+  - `MetricsStore`, an `@MainActor @Observable` class. A main-actor `Task` loop awaits `SamplingEngine.tick()` once per second and applies the snapshot and histories.
   - Status item renderers, which are custom `NSView` drawing.
   - SwiftUI panels and settings.
   - The Sparkle updater controller.
@@ -131,13 +133,13 @@ Readout/
 | Network bytes | `sysctl` `NET_RT_IFLIST2` → `if_msghdr2.ifm_data` (`if_data64`) | 64-bit counters. `getifaddrs`' 32-bit `if_data` wraps at 4 GiB. |
 | Primary interface | `SCDynamicStore` key `State:/Network/Global/IPv4` → `PrimaryInterface` | Re-resolved on store change notifications. The rate is the primary interface only, so VPN tunnels are not double-counted. |
 | Per-process network | `/usr/bin/nettop -P -L 1 -x -J bytes_in,bytes_out` | Two samples, then the delta. Panel-open only. |
-| CPU | `host_processor_info(PROCESSOR_CPU_LOAD_INFO)` | Per-core user/system/idle/nice tick deltas. P/E grouping from `sysctl hw.perflevel*`. |
+| CPU | `host_processor_info(PROCESSOR_CPU_LOAD_INFO)` | Per-core user/system/idle/nice tick deltas. P/E grouping from each `IODeviceTree:/cpus/*` node's `cluster-type` keyed by `logical-cpu-id`. On M1 Ultra the clusters are interleaved (cpu0–1 E, 2–9 P, 10–11 E, 12–19 P), so position is not a valid proxy. |
 | Top CPU / memory | `/bin/ps -Aceo pid,pcpu,rss,comm` | Panel-open only. |
 | Memory pressure | `sysctl kern.memorystatus_level` | pressure = 100 − level |
 | Memory breakdown | `host_statistics64(HOST_VM_INFO64)`, `sysctl vm.swapusage` | |
 | Disk capacity | `URLResourceValues` `volumeTotalCapacity`, `volumeAvailableCapacityForImportantUsage` on `/` | Purgeable counts as free, matching iStat. |
-| Disk throughput | IOKit `IOBlockStorageDriver` `Statistics` (bytes read/written) | Deltas, as with network. |
-| Temperatures | `IOHIDEventSystemClient` with matching `PrimaryUsagePage 0xff00 / PrimaryUsage 5`, read via `IOHIDServiceClientCopyEvent` temperature events | Private API, declared via a bridging header. Sensor names are mapped to CPU/GPU groups in ReadoutCore. The M1 Ultra mapping is discovered empirically with `readout-probe --sensors`. |
+| Disk throughput | IOKit `IOBlockStorageDriver` `Statistics` (bytes read/written), summed over all drivers | Deltas, as with network. A detached drive lowers the sum, which reads as 0 for that tick. |
+| Temperatures | `AppleSMC` user client, read-only, `flt ` keys. CPU = mean of keys `Tp` + digit + any (P-core sensors; excludes `TpD*`). GPU = mean of keys `Tg` + digit + any. | Calibrated 2026-10-08 on M1 Ultra. iStat read 106/107/107 °F while the `Tp` mean read 107/106/104 °F, within tolerance. The IOHID `PMU tdie*` sensors read about 97 °F, about 10 °F low, so IOHID is not used. Readings outside 5–130 °C are discarded. `readout-probe --sensors` dumps every `T*` key. |
 | Fan RPM | `AppleSMC` user client, read-only keys `FNum`, `F0Ac` | Reads need no privilege. Nothing is written. |
 | Load averages | `getloadavg` | |
 
@@ -166,8 +168,8 @@ Average CPU at most 0.5% of one core with all panels closed, measured with `top 
 Runs on `macos-26` (arm64). Public repos get hosted macOS minutes at no cost.
 
 1. Check out the code, select the Xcode version, `brew install xcodegen`.
-2. `swift format lint --strict --recursive Sources App Tests` (swift-format ships with the toolchain).
-3. `swift test` (ReadoutCore and ReadoutSystem tests).
+2. `swift format lint --strict --recursive ReadoutKit/Sources ReadoutKit/Tests App` (swift-format ships with the toolchain).
+3. `swift test --package-path ReadoutKit` (ReadoutCore and ReadoutSystem tests).
 4. `xcodegen generate`, then `xcodebuild build` for the app with ad-hoc signing (`CODE_SIGN_IDENTITY=-`).
 5. `Readout.app/Contents/MacOS/Readout --self-test`: runs every sampler for 3 ticks headlessly and exits non-zero if any non-sensor sampler returns `nil`. Sensor samplers may be `nil` on the VM runner; real-hardware sensor verification is the acceptance step in section 8.
 
@@ -219,13 +221,13 @@ README sections: what it shows, install (dmg from Releases), updating, privacy (
 
 - counter deltas, including a 32-bit wrap, a 64-bit counter, and a reset
 - rate math with uneven tick intervals
-- formatter boundaries (`999 B/s`, `1.0 KB/s`, `999 KB/s` → `1.0 MB/s`, `1.00 GB/s`)
+- formatter boundaries (`999 B/s`, `1.0 KB/s`, `999 KB/s` → `1.0 MB/s`, `1.0 GB/s`)
 - CPU tick ratios from recorded `host_processor_info` snapshots
 - pressure math
 - disk % with purgeable space
 - ring buffer wrap
 - °F/°C conversion
-- sensor classification using the recorded M1 Ultra sensor list
+- SMC key classification and averaging using the recorded M1 Ultra key list
 - `nettop` and `ps` output parsing from recorded output
 
 **System tests (ReadoutSystem, run in CI):**
