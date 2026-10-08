@@ -34,6 +34,7 @@ int readout_read_vm_pages(readout_vm_pages *out);
 int readout_read_memorystatus_level(void);
 int readout_read_swap(uint64_t *used, uint64_t *total);
 int readout_read_disk_io(uint64_t *bytes_read, uint64_t *bytes_written);
+int readout_read_volume_used(const char *path, int64_t *used);
 
 typedef struct {
     uint32_t connection;

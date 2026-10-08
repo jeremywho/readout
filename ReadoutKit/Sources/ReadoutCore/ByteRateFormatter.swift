@@ -15,7 +15,7 @@ public enum ByteRateFormatter {
     }
 
     private static func render(_ value: Double, unitIndex: Int) -> String {
-        if unitIndex >= 2, value < 9.95 {
+        if unitIndex >= 2, value < 99.95 {
             return String(format: "%.1f", value) + " " + units[unitIndex]
         }
         let rounded = value.rounded()

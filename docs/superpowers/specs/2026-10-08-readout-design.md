@@ -49,7 +49,7 @@ Each item is its own `NSStatusItem`, so macOS persists ⌘-drag reordering throu
 
 | Item | Rendering |
 |---|---|
-| Network | Two right-aligned lines, `↑` upload over `↓` download. Monospaced digits, fixed width so the bar never jitters. Units are B/s, KB/s, MB/s and GB/s with decimal (1000) steps, 3 significant digits at most (`999 KB/s` → `1.0 MB/s`), matching iStat's `Network_DataFormat` bytes mode. |
+| Network | Two right-aligned lines, `↑` upload over `↓` download. Monospaced digits, fixed width so the bar never jitters. Units are B/s, KB/s, MB/s and GB/s with decimal (1000) steps, B/s and KB/s as integers, MB/s and GB/s with one decimal below 100 (`999 KB/s` → `1.0 MB/s`, `19.0 MB/s`, `125 MB/s`), matching iStat's `Network_DataFormat` bytes mode as observed under load on 2026-10-08. |
 | CPU temp | 9 pt caption `CPU` over a value such as `126°`. Unit is °F or °C per settings. |
 | Disk | Caption `SSD` over `81%`. |
 | CPU graph | 20 columns at 1 sample/s (2 pt bars, 1 pt gaps, newest on the right), each a stacked user (blue) + system (pink) bar, inside a rounded outline. Matches iStat's density and colors in both appearances. |
@@ -137,7 +137,7 @@ Readout/
 | Top CPU / memory | `/bin/ps -Aceo pid,pcpu,rss,comm` | Panel-open only. |
 | Memory pressure | `sysctl kern.memorystatus_level` | pressure = 100 − level |
 | Memory breakdown | `host_statistics64(HOST_VM_INFO64)`, `sysctl vm.swapusage` | |
-| Disk capacity | `URLResourceValues` `volumeTotalCapacity`, `volumeAvailableCapacityForImportantUsage` on `/` | Purgeable counts as free, matching iStat. |
+| Disk capacity | `URLResourceValues` `volumeTotalCapacity`, `volumeAvailableCapacity` (container free) and `volumeAvailableCapacityForImportantUsage` on `/`; `getattrlist(ATTR_VOL_SPACEUSED)` on `/System/Volumes/Data` | used % = (Data-volume used − purgeable) ÷ container total, where purgeable = important-usage free − container free. Matches iStat (80.41% vs iStat 80% on 2026-10-08); the container-wide figure read 81.6%. Falls back to the container-wide figure if `getattrlist` fails. |
 | Disk throughput | IOKit `IOBlockStorageDriver` `Statistics` (bytes read/written), summed over all drivers | Deltas, as with network. A detached drive lowers the sum, which reads as 0 for that tick. |
 | Temperatures | `AppleSMC` user client, read-only, `flt ` keys. CPU = mean of keys `Tp` + digit + any (P-core sensors; excludes `TpD*`). GPU = mean of keys `Tg` + digit + any. | Calibrated 2026-10-08 on M1 Ultra. iStat read 106/107/107 °F while the `Tp` mean read 107/106/104 °F, within tolerance. The IOHID `PMU tdie*` sensors read about 97 °F, about 10 °F low, so IOHID is not used. Readings outside 5–130 °C are discarded. `readout-probe --sensors` dumps every `T*` key. |
 | Fan RPM | `AppleSMC` user client, read-only keys `FNum`, `F0Ac` | Reads need no privilege. Nothing is written. |

@@ -31,13 +31,41 @@ import Testing
         #expect(MemoryMath.breakdown(pages).app == 0)
     }
 
-    @Test func diskUsedPercentCountsPurgeableAsFree() {
-        #expect(DiskMath.usedPercent(totalBytes: 2_000, availableBytes: 380) == 81)
+    @Test func diskUsedPercentMatchesIStatOnRecordedMacstudioValues() throws {
+        let percent = try #require(
+            DiskMath.usedPercent(
+                volumeUsedBytes: 1_729_511_211_008, totalBytes: 1_995_218_165_760,
+                availableForImportantUsage: 367_672_773_679, containerFreeBytes: 242_417_848_320))
+        #expect(abs(percent - 80.4050561) < 0.0001)
+        #expect(MenuBarText.percent(percent) == "80%")
+    }
+
+    @Test func diskPurgeableIsNeverNegative() {
+        let percent = DiskMath.usedPercent(
+            volumeUsedBytes: 500, totalBytes: 1_000, availableForImportantUsage: 100, containerFreeBytes: 300)
+        #expect(percent == 50)
+    }
+
+    @Test func diskUsedIsClampedToTheContainer() {
+        #expect(
+            DiskMath.usedPercent(
+                volumeUsedBytes: 5_000, totalBytes: 1_000, availableForImportantUsage: 0, containerFreeBytes: 0)
+                == 100)
+        #expect(
+            DiskMath.usedPercent(
+                volumeUsedBytes: 100, totalBytes: 1_000, availableForImportantUsage: 900, containerFreeBytes: 0)
+                == 0)
     }
 
     @Test func diskUsedPercentRejectsNonsense() {
-        #expect(DiskMath.usedPercent(totalBytes: 0, availableBytes: 0) == nil)
-        #expect(DiskMath.usedPercent(totalBytes: 100, availableBytes: -1) == nil)
-        #expect(DiskMath.usedPercent(totalBytes: 100, availableBytes: 150) == 0)
+        #expect(
+            DiskMath.usedPercent(
+                volumeUsedBytes: 1, totalBytes: 0, availableForImportantUsage: 0, containerFreeBytes: 0) == nil)
+        #expect(
+            DiskMath.usedPercent(
+                volumeUsedBytes: -1, totalBytes: 100, availableForImportantUsage: 0, containerFreeBytes: 0) == nil)
+        #expect(
+            DiskMath.usedPercent(
+                volumeUsedBytes: 1, totalBytes: 100, availableForImportantUsage: -1, containerFreeBytes: 0) == nil)
     }
 }

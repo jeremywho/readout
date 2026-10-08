@@ -19,7 +19,7 @@ enum MeterDrawing {
             return ceil(widest) + horizontalPadding * 2
         case .network(let up, let down):
             let widest = max(
-                textWidth("↓ 999 KB/s", networkFont), textWidth("↑ " + up, networkFont),
+                textWidth("↓ 99.9 MB/s", networkFont), textWidth("↑ " + up, networkFont),
                 textWidth("↓ " + down, networkFont))
             return ceil(widest) + horizontalPadding * 2
         case .graph:

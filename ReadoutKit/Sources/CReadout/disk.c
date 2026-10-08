@@ -2,6 +2,25 @@
 
 #include <CoreFoundation/CoreFoundation.h>
 #include <IOKit/IOKitLib.h>
+#include <string.h>
+#include <sys/attr.h>
+#include <unistd.h>
+
+int readout_read_volume_used(const char *path, int64_t *used) {
+    struct attrlist request;
+    memset(&request, 0, sizeof request);
+    request.bitmapcount = ATTR_BIT_MAP_COUNT;
+    request.volattr = ATTR_VOL_INFO | ATTR_VOL_SPACEUSED;
+    struct {
+        uint32_t length;
+        off_t space_used;
+    } __attribute__((packed)) reply;
+    if (getattrlist(path, &request, &reply, sizeof reply, 0) != 0 || reply.length < sizeof reply) {
+        return -1;
+    }
+    *used = (int64_t)reply.space_used;
+    return 0;
+}
 
 static uint64_t readout_statistic(CFDictionaryRef statistics, CFStringRef key) {
     CFNumberRef number = CFDictionaryGetValue(statistics, key);

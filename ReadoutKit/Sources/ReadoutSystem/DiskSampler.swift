@@ -30,12 +30,17 @@ public final class DiskSampler {
     }
 
     private var volume: URL
+    private let dataVolumePath: String
     private let capacityInterval: Double
     private var capacity: Capacity?
     private var meter = RateMeter()
 
-    public init(volume: URL = URL(fileURLWithPath: "/"), capacityInterval: Double = 30) {
+    public init(
+        volume: URL = URL(fileURLWithPath: "/"), dataVolumePath: String = "/System/Volumes/Data",
+        capacityInterval: Double = 30
+    ) {
         self.volume = volume
+        self.dataVolumePath = dataVolumePath
         self.capacityInterval = capacityInterval
     }
 
@@ -56,12 +61,23 @@ public final class DiskSampler {
         volume.removeAllCachedResourceValues()
         guard
             let values = try? volume.resourceValues(forKeys: [
-                .volumeTotalCapacityKey, .volumeAvailableCapacityForImportantUsageKey,
+                .volumeTotalCapacityKey, .volumeAvailableCapacityKey, .volumeAvailableCapacityForImportantUsageKey,
             ]),
-            let total = values.volumeTotalCapacity,
-            let available = values.volumeAvailableCapacityForImportantUsage,
-            let percent = DiskMath.usedPercent(totalBytes: Int64(total), availableBytes: available)
+            let totalCapacity = values.volumeTotalCapacity,
+            let containerFree = values.volumeAvailableCapacity,
+            let important = values.volumeAvailableCapacityForImportantUsage
         else { return nil }
-        return Capacity(total: Int64(total), available: available, percent: percent, measuredAt: seconds)
+        let total = Int64(totalCapacity)
+        var volumeUsed: Int64 = 0
+        if readout_read_volume_used(dataVolumePath, &volumeUsed) != 0 {
+            volumeUsed = total - Int64(containerFree)
+        }
+        guard
+            let percent = DiskMath.usedPercent(
+                volumeUsedBytes: volumeUsed, totalBytes: total, availableForImportantUsage: important,
+                containerFreeBytes: Int64(containerFree))
+        else { return nil }
+        let available = total - Int64((Double(total) * percent / 100).rounded())
+        return Capacity(total: total, available: available, percent: percent, measuredAt: seconds)
     }
 }
