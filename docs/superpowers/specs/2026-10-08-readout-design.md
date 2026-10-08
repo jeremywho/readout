@@ -152,7 +152,7 @@ Readout/
 
 ### 4.5 Performance budget
 
-Average CPU at most 0.5% of one core with all panels closed, measured with `top -l 30 -pid <pid> -stats cpu` on macstudio. Resident memory at most 60 MB.
+Average CPU at most 2% of one core with all panels closed, measured with `top -l 30 -pid <pid> -stats cpu` on macstudio. Resident memory at most 60 MB. The original 0.5% target was not reachable at a 1 Hz network refresh: most of the cost is AppKit redrawing the status item copies on every display. Measured 2026-10-08: Readout 1.92%, iStat Menus 1.24% on the same machine. Jeremy chose to keep the 1 Hz refresh and accept the higher budget.
 
 ## 5. Updates (Sparkle 2)
 
