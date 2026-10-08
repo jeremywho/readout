@@ -16,18 +16,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         Preferences.registerDefaults()
+        preferenceFingerprint = preferencesFingerprint()
         reconcileStatusItems()
         applyEnginePreferences()
         defaultsObserver = NotificationCenter.default.addObserver(
             forName: UserDefaults.didChangeNotification, object: nil, queue: .main
         ) { [weak self] _ in
-            MainActor.assumeIsolated { self?.preferencesChanged() }
+            MainActor.assumeIsolated { self?.applyPreferencesIfChanged() }
         }
         samplingTask = Task { [weak self] in
             while !Task.isCancelled {
                 guard let self else { return }
                 let snapshot = await self.engine.tick()
                 self.store.apply(snapshot)
+                self.applyPreferencesIfChanged()
                 self.refreshStatusItems()
                 try? await Task.sleep(for: .seconds(1))
             }
@@ -38,8 +40,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         samplingTask?.cancel()
     }
 
-    private func preferencesChanged() {
-        reconcileStatusItems()
+    private var preferenceFingerprint = ""
+
+    private func preferencesFingerprint() -> String {
+        MeterKind.allCases.map { Preferences.isEnabled($0) ? "1" : "0" }.joined()
+            + Preferences.temperatureUnit.rawValue + "|" + Preferences.networkInterface
+    }
+
+    private func applyPreferencesIfChanged() {
+        let fingerprint = preferencesFingerprint()
+        guard fingerprint != preferenceFingerprint else { return }
+        preferenceFingerprint = fingerprint
         applyEnginePreferences()
         refreshStatusItems()
     }
@@ -50,21 +61,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func reconcileStatusItems() {
-        for kind in MeterKind.allCases.reversed() {
-            let enabled = Preferences.isEnabled(kind)
-            if enabled, controllers[kind] == nil {
-                controllers[kind] = makeController(for: kind)
-            } else if !enabled, let controller = controllers.removeValue(forKey: kind) {
-                controller.remove()
-            }
+        for kind in MeterKind.allCases.reversed() where controllers[kind] == nil {
+            controllers[kind] = makeController(for: kind)
         }
     }
 
     private func refreshStatusItems() {
         let unit = Preferences.temperatureUnit
         for (kind, controller) in controllers {
-            controller.update(MeterContentBuilder.content(for: kind, store: store, unit: unit))
-            if kind == .temperature { controller.setVisible(store.temperatureAvailable) }
+            let visible = Preferences.isEnabled(kind) && (kind != .temperature || store.temperatureAvailable)
+            controller.setVisible(visible)
+            if visible { controller.update(MeterContentBuilder.content(for: kind, store: store, unit: unit)) }
         }
     }
 
