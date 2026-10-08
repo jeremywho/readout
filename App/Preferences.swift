@@ -5,6 +5,7 @@ enum Preferences {
     enum Key {
         static let temperatureUnit = "temperatureUnit"
         static let networkInterface = "networkInterface"
+        static let launchAtLoginDefaultApplied = "launchAtLoginDefaultApplied"
 
         static func enabled(_ kind: MeterKind) -> String { "item.\(kind.rawValue).enabled" }
     }
@@ -24,6 +25,12 @@ enum Preferences {
 
     static var temperatureUnit: TemperatureUnit {
         TemperatureUnit(rawValue: UserDefaults.standard.string(forKey: Key.temperatureUnit) ?? "") ?? .fahrenheit
+    }
+
+    static var launchAtLoginDefault: FirstRunAction {
+        FirstRunAction(
+            isDone: { UserDefaults.standard.bool(forKey: Key.launchAtLoginDefaultApplied) },
+            markDone: { UserDefaults.standard.set(true, forKey: Key.launchAtLoginDefaultApplied) })
     }
 
     static var networkInterface: String {
