@@ -1,0 +1,10 @@
+import os
+
+@MainActor
+final class Updater {
+    private let logger = Logger(subsystem: "com.daughhetee.Readout", category: "updates")
+
+    func checkForUpdates() {
+        logger.info("update checks are not wired up yet")
+    }
+}
