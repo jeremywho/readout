@@ -4,7 +4,10 @@ version="$1"
 build="$2"
 cd "$(dirname "$0")/.."
 : "${ASC_KEY_ID:?}" "${ASC_ISSUER_ID:?}" "${ASC_KEY_PATH:?}"
-security unlock-keychain -p "$(cat ~/.claude-keychain-pw)" ~/Library/Keychains/login.keychain-db
+security show-keychain-info ~/Library/Keychains/login.keychain-db >/dev/null 2>&1 || {
+  echo "Unlock the login keychain first: security unlock-keychain ~/Library/Keychains/login.keychain-db" >&2
+  exit 1
+}
 scripts/fetch-sparkle.sh
 key_dir="$(mktemp -d)"
 trap 'rm -P -f "$key_dir/sparkle-ed-key"; rmdir "$key_dir"' EXIT

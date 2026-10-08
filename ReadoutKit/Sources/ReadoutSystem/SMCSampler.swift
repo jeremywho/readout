@@ -41,7 +41,8 @@ public final class SMCSampler {
         let summary = SensorClassifier.summarize(keys.compactMap(readSensor))
         lastReading =
             summary.cpuCelsius != nil || summary.gpuCelsius != nil
-            ? TemperatureReading(summary: summary, fanRPMs: fanKeys.compactMap(readValue)) : nil
+            ? TemperatureReading(
+                summary: summary, fanRPMs: fanKeys.compactMap(readValue).compactMap(FanSpeed.plausible)) : nil
         return lastReading
     }
 
@@ -53,8 +54,8 @@ public final class SMCSampler {
     private func discoverKeys() -> [Key] {
         let sensors = allKeyCodes().filter { SensorClassifier.kind(ofKey: FourCC.text($0)) != nil }.compactMap(describe)
         sensorKeys = sensors
-        let fanCount = describe(FourCC.code("FNum")).flatMap(readValue).map { Int($0) } ?? 0
-        fanKeys = (0..<min(max(fanCount, 0), 10)).compactMap { describe(FourCC.code("F\($0)Ac")) }
+        let fanCount = describe(FourCC.code("FNum")).flatMap(readValue).map(FanSpeed.count(fromSMCValue:)) ?? 0
+        fanKeys = (0..<fanCount).compactMap { describe(FourCC.code("F\($0)Ac")) }
         return sensors
     }
 

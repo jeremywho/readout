@@ -25,6 +25,23 @@ import Testing
         #expect(elapsed < .seconds(5))
     }
 
+    @Test func processIgnoringSigtermIsKilledAndReportsNilAtTimeout() async {
+        let start = ContinuousClock.now
+        let output = await ProcessRunner.run(
+            "/bin/sh", ["-c", "trap '' TERM; while :; do sleep 1; done"], timeout: 0.5)
+        let elapsed = ContinuousClock.now - start
+        #expect(output == nil)
+        #expect(elapsed < .seconds(3))
+    }
+
+    @Test func grandchildHoldingThePipeDoesNotBlockTheResult() async {
+        let start = ContinuousClock.now
+        let output = await ProcessRunner.run("/bin/sh", ["-c", "sleep 30 & wait"], timeout: 0.5)
+        let elapsed = ContinuousClock.now - start
+        #expect(output == nil)
+        #expect(elapsed < .seconds(3))
+    }
+
     @Test func realPsOutputParses() async throws {
         let output = try #require(await ProcessRunner.run("/bin/ps", ["-Aceo", "pid=,pcpu=,rss=,comm="], timeout: 5))
         #expect(PSParser.parse(output).contains { $0.pid == ProcessInfo.processInfo.processIdentifier })
