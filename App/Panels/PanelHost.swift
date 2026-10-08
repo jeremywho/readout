@@ -39,7 +39,8 @@ struct PanelFooter: View {
             Spacer()
             Button("Quit Readout") { actions.quit() }
         }
-        .buttonStyle(.borderless)
+        .buttonStyle(.plain)
+        .foregroundStyle(Color.accentColor)
         .font(.callout)
     }
 }

@@ -44,14 +44,18 @@ struct HistoryGraph: View {
         .frame(height: 64)
         .padding(6)
         .background(RoundedRectangle(cornerRadius: 8).fill(.quaternary.opacity(0.5)))
-        .overlay(alignment: .topLeading) {
-            if case .network(let samples) = series {
-                let peak = samples.map { max($0.upBytesPerSecond, $0.downBytesPerSecond) }.max() ?? 0
-                Text("peak \(ByteRateFormatter.string(bytesPerSecond: peak))").font(.caption2).foregroundStyle(
-                    .secondary
-                ).padding(8)
+        .overlay(alignment: .topTrailing) {
+            if let peakLabel {
+                Text(peakLabel).font(.caption2).foregroundStyle(.secondary).padding(.horizontal, 6)
+                    .background(Capsule().fill(.background.opacity(0.8))).padding(6)
             }
         }
+    }
+
+    private var peakLabel: String? {
+        guard case .network(let samples) = series else { return nil }
+        let peak = samples.map { max($0.upBytesPerSecond, $0.downBytesPerSecond) }.max() ?? 0
+        return "peak \(ByteRateFormatter.string(bytesPerSecond: peak))"
     }
 
     private func path(_ values: [Double], peak: Double, in size: CGSize) -> Path {

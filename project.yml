@@ -18,6 +18,8 @@ targets:
       - path: App
         excludes:
           - Info.plist
+      - path: THIRD_PARTY_NOTICES.md
+        buildPhase: resources
     dependencies:
       - package: ReadoutKit
         product: ReadoutSystem
@@ -44,7 +46,7 @@ targets:
         MARKETING_VERSION: 0.0.0
         CURRENT_PROJECT_VERSION: 1
         SWIFT_VERSION: 6.0
-        ENABLE_HARDENED_RUNTIME: YES
+        ENABLE_HARDENED_RUNTIME: NO
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "-"
         DEVELOPMENT_TEAM: ""
