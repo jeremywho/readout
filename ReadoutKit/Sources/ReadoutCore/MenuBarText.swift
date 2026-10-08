@@ -13,4 +13,9 @@ public enum MenuBarText {
         guard let value, value.isFinite else { return placeholder }
         return "\(Int(min(max(value, 0), 100).rounded()))%"
     }
+
+    public static func temperature(celsius: Double?, unit: TemperatureUnit) -> String {
+        guard let celsius, celsius.isFinite else { return placeholder }
+        return "\(Int(TemperatureUnit.convert(celsius: celsius, to: unit).rounded()))°"
+    }
 }
