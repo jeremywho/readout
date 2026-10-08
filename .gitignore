@@ -1,0 +1,11 @@
+.DS_Store
+.build/
+.swiftpm/
+build/
+dist/
+DerivedData/
+*.xcodeproj/
+App/Info.plist
+*.p12
+*.p8
+*.keychain-db
