@@ -14,12 +14,18 @@ struct PanelHost: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(kind.title).font(.headline)
+            switch kind {
+            case .network: NetworkPanel()
+            case .cpu: CPUPanel()
+            case .memory: MemoryPanel()
+            case .disk: DiskPanel()
+            case .temperature: TemperaturePanel()
+            }
             Divider()
             PanelFooter(actions: actions)
         }
         .padding(14)
-        .frame(width: 300)
+        .frame(width: 320)
     }
 }
 
