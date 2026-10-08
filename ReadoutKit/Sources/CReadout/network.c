@@ -1,7 +1,9 @@
 #include "readout.h"
 
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <net/route.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -28,11 +30,15 @@ int readout_read_interface_counters(readout_interface_counters *out, int capacit
         if (header->ifm_msglen == 0) {
             break;
         }
-        if (header->ifm_type == RTM_IFINFO2) {
+        if (header->ifm_type == RTM_IFINFO2 &&
+            header->ifm_msglen >= sizeof(struct if_msghdr2) + offsetof(struct sockaddr_dl, sdl_data)) {
             struct if_msghdr2 *info = (struct if_msghdr2 *)cursor;
-            char name[IF_NAMESIZE];
-            if (if_indextoname(info->ifm_index, name) != NULL) {
-                strlcpy(out[count].name, name, sizeof out[count].name);
+            struct sockaddr_dl *link = (struct sockaddr_dl *)(info + 1);
+            size_t length = link->sdl_nlen;
+            if (link->sdl_family == AF_LINK && length > 0 && length < sizeof out[count].name &&
+                sizeof(struct if_msghdr2) + offsetof(struct sockaddr_dl, sdl_data) + length <= header->ifm_msglen) {
+                memcpy(out[count].name, link->sdl_data, length);
+                out[count].name[length] = '\0';
                 out[count].bytes_in = info->ifm_data.ifi_ibytes;
                 out[count].bytes_out = info->ifm_data.ifi_obytes;
                 count++;

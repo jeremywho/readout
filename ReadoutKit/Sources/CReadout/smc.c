@@ -23,13 +23,13 @@ typedef struct {
     uint32_t size;
     uint32_t type;
     char attributes;
-} readout_smc_key_info;
+} readout_smc_info_block;
 
 typedef struct {
     uint32_t key;
     readout_smc_version version;
     readout_smc_limit limit;
-    readout_smc_key_info info;
+    readout_smc_info_block info;
     char result;
     char status;
     char command;
@@ -73,7 +73,7 @@ void readout_smc_close(readout_smc *smc) {
     }
 }
 
-int readout_smc_read(const readout_smc *smc, uint32_t key, uint8_t *bytes, uint32_t *size, uint32_t *type) {
+int readout_smc_key_info(const readout_smc *smc, uint32_t key, uint32_t *size, uint32_t *type) {
     readout_smc_param input = {0};
     readout_smc_param output = {0};
     input.key = key;
@@ -81,22 +81,35 @@ int readout_smc_read(const readout_smc *smc, uint32_t key, uint8_t *bytes, uint3
     if (readout_smc_call(smc->connection, &input, &output) != KERN_SUCCESS || output.result != 0) {
         return -1;
     }
-    readout_smc_key_info info = output.info;
-    if (info.size == 0 || info.size > 32) {
+    if (output.info.size == 0 || output.info.size > 32) {
         return -1;
     }
-    memset(&input, 0, sizeof input);
-    memset(&output, 0, sizeof output);
+    *size = output.info.size;
+    *type = output.info.type;
+    return 0;
+}
+
+int readout_smc_read_known(const readout_smc *smc, uint32_t key, uint32_t size, uint8_t *bytes) {
+    if (size == 0 || size > 32) {
+        return -1;
+    }
+    readout_smc_param input = {0};
+    readout_smc_param output = {0};
     input.key = key;
-    input.info.size = info.size;
+    input.info.size = size;
     input.command = readout_smc_read_bytes;
     if (readout_smc_call(smc->connection, &input, &output) != KERN_SUCCESS || output.result != 0) {
         return -1;
     }
-    memcpy(bytes, output.bytes, info.size);
-    *size = info.size;
-    *type = info.type;
+    memcpy(bytes, output.bytes, size);
     return 0;
+}
+
+int readout_smc_read(const readout_smc *smc, uint32_t key, uint8_t *bytes, uint32_t *size, uint32_t *type) {
+    if (readout_smc_key_info(smc, key, size, type) != 0) {
+        return -1;
+    }
+    return readout_smc_read_known(smc, key, *size, bytes);
 }
 
 int readout_smc_key_count(const readout_smc *smc, uint32_t *count) {

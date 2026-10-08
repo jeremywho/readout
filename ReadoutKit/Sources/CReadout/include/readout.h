@@ -43,6 +43,8 @@ typedef struct {
 int readout_smc_open(readout_smc *smc);
 void readout_smc_close(readout_smc *smc);
 int readout_smc_read(const readout_smc *smc, uint32_t key, uint8_t *bytes, uint32_t *size, uint32_t *type);
+int readout_smc_key_info(const readout_smc *smc, uint32_t key, uint32_t *size, uint32_t *type);
+int readout_smc_read_known(const readout_smc *smc, uint32_t key, uint32_t size, uint8_t *bytes);
 int readout_smc_key_count(const readout_smc *smc, uint32_t *count);
 int readout_smc_key_at(const readout_smc *smc, uint32_t index, uint32_t *key);
 

@@ -44,7 +44,7 @@ public actor SamplingEngine {
             cpu: cpu.sample(),
             memory: memory.sample(),
             disk: disk.sample(at: seconds),
-            temperature: temperature.sample()
+            temperature: temperature.sample(at: seconds)
         )
     }
 

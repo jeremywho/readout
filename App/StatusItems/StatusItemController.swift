@@ -23,6 +23,7 @@ final class StatusItemController: NSObject {
     }
 
     func update(_ content: MeterContent) {
+        guard content != meter.content else { return }
         meter.content = content
         let width = MeterDrawing.width(for: content)
         if item.length != width { item.length = width }
