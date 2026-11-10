@@ -30,6 +30,13 @@ public struct RGB: Sendable, Equatable {
         let darker = min(luminance, other.luminance)
         return (lighter + 0.05) / (darker + 0.05)
     }
+
+    /// This colour drawn at `alpha` over `backdrop`.
+    public func composited(over backdrop: RGB, alpha: Double) -> RGB {
+        RGB(
+            red * alpha + backdrop.red * (1 - alpha), green * alpha + backdrop.green * (1 - alpha),
+            blue * alpha + backdrop.blue * (1 - alpha))
+    }
 }
 
 public struct AdaptiveRGB: Sendable, Equatable {
@@ -56,4 +63,11 @@ public enum PanelPalette {
     public static let textColors: [(name: String, color: AdaptiveRGB)] = [
         ("secondary", secondary), ("download", download), ("upload", upload), ("link", link),
     ]
+
+    public static let minimumGraphicContrast = 3.0
+
+    /// Drawn behind the menu bar graph. The menu bar is translucent, so without it the bars are only as visible as
+    /// the wallpaper allows. At this alpha both series keep `minimumGraphicContrast` over any wallpaper.
+    public static let graphBacking = AdaptiveRGB(light: RGB(white: 1), dark: RGB(white: 0))
+    public static let graphBackingAlpha = 0.7
 }

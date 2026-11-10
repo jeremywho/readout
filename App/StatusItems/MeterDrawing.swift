@@ -8,8 +8,9 @@ enum MeterDrawing {
     static let captionFont = NSFont.systemFont(ofSize: 8.5, weight: .medium)
     static let valueFont = NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .regular)
     static let networkFont = NSFont.monospacedDigitSystemFont(ofSize: 9.5, weight: .regular)
-    static let userColor = NSColor(srgbRed: 0.27, green: 0.47, blue: 1.0, alpha: 1)
-    static let systemColor = NSColor(srgbRed: 1.0, green: 0.30, blue: 0.55, alpha: 1)
+    static let userColor = color(PanelPalette.download)
+    static let systemColor = color(PanelPalette.upload)
+    static let graphBacking = color(PanelPalette.graphBacking, alpha: PanelPalette.graphBackingAlpha)
     private static let horizontalPadding: CGFloat = 4
 
     static func width(for content: MeterContent) -> CGFloat {
@@ -48,6 +49,13 @@ enum MeterDrawing {
         }
     }
 
+    private static func color(_ color: AdaptiveRGB, alpha: Double = 1) -> NSColor {
+        NSColor(name: nil) { appearance in
+            let rgb = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? color.dark : color.light
+            return NSColor(srgbRed: rgb.red, green: rgb.green, blue: rgb.blue, alpha: alpha)
+        }
+    }
+
     private static func textWidth(_ text: String, _ font: NSFont) -> CGFloat {
         (text as NSString).size(withAttributes: [.font: font]).width
     }
@@ -74,8 +82,10 @@ enum MeterDrawing {
 
     private static func drawGraph(_ loads: [CoreLoad], in rect: NSRect) {
         let frame = NSRect(x: rect.minX, y: rect.minY + 3, width: rect.width, height: rect.height - 6)
-        NSColor.labelColor.withAlphaComponent(0.55).setStroke()
         let outline = NSBezierPath(roundedRect: frame.insetBy(dx: 0.5, dy: 0.5), xRadius: 3, yRadius: 3)
+        graphBacking.setFill()
+        outline.fill()
+        NSColor.labelColor.withAlphaComponent(0.55).setStroke()
         outline.lineWidth = 1
         outline.stroke()
         let plot = frame.insetBy(dx: 2, dy: 2)
