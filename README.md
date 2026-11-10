@@ -24,6 +24,8 @@ A small, open-source macOS menu bar system monitor: network throughput first, pl
 - **GPU**: usage of the GPU with a 2-minute history, GPU memory in use and GPU temperature.
 - **Memory**: memory pressure, the used/wired/compressed breakdown, swap, and the top processes.
 
+Each item can be switched off, and the items can be put in any order, in Settings.
+
 ## Install
 
 Download the latest `Readout-x.y.z.dmg` from [Releases](https://github.com/jeremywho/readout/releases), open it, and drag Readout to Applications. Requires macOS 26 or later. Builds are signed with Developer ID and notarized by Apple.

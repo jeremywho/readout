@@ -8,6 +8,7 @@ enum Preferences {
         static let launchAtLoginDefaultApplied = "launchAtLoginDefaultApplied"
         static let itemGeneration = "itemGeneration"
         static let placedItems = "placedItems"
+        static let itemOrder = "itemOrder"
 
         static func enabled(_ kind: MeterKind) -> String { "item.\(kind.rawValue).enabled" }
     }
@@ -33,6 +34,15 @@ enum Preferences {
         FirstRunAction(
             isDone: { UserDefaults.standard.bool(forKey: Key.launchAtLoginDefaultApplied) },
             markDone: { UserDefaults.standard.set(true, forKey: Key.launchAtLoginDefaultApplied) })
+    }
+
+    static var itemOrder: [MeterKind] {
+        order(from: UserDefaults.standard.string(forKey: Key.itemOrder) ?? "")
+    }
+
+    static func order(from stored: String) -> [MeterKind] {
+        ItemOrder.resolve(stored: stored, defaults: MeterKind.allCases.map(\.rawValue))
+            .compactMap(MeterKind.init(rawValue:))
     }
 
     static var itemLayout: ItemLayout {

@@ -13,6 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let presenter = PanelPresenter()
     private var controllers: [MeterKind: StatusItemController] = [:]
     private var itemLayout = ItemLayout()
+    private var itemOrder = MeterKind.allCases
     private var shownKinds: Set<MeterKind>?
     private var samplingTask: Task<Void, Never>?
     private var defaultsObserver: NSObjectProtocol?
@@ -22,8 +23,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Preferences.registerDefaults()
         Preferences.launchAtLoginDefault.perform { try SMAppService.mainApp.register() }
         preferenceFingerprint = preferencesFingerprint()
-        itemLayout = Preferences.itemLayout.placing(MeterKind.allCases.map(\.rawValue))
-        Preferences.itemLayout = itemLayout
+        applyItemOrder()
         reconcileStatusItems()
         applyEnginePreferences()
         defaultsObserver = NotificationCenter.default.addObserver(
@@ -51,7 +51,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func preferencesFingerprint() -> String {
         MeterKind.allCases.map { Preferences.isEnabled($0) ? "1" : "0" }.joined()
-            + Preferences.temperatureUnit.rawValue + "|" + Preferences.networkInterface
+            + Preferences.temperatureUnit.rawValue + "|" + Preferences.networkInterface + "|"
+            + ItemOrder.stored(Preferences.itemOrder.map(\.rawValue))
     }
 
     private func applyPreferencesIfChanged() {
@@ -59,7 +60,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard fingerprint != preferenceFingerprint else { return }
         preferenceFingerprint = fingerprint
         applyEnginePreferences()
+        if applyItemOrder() { rebuildStatusItems() }
         refreshStatusItems()
+    }
+
+    /// Returns whether the items must be re-created: Settings now asks for another order than they were created in.
+    @discardableResult
+    private func applyItemOrder() -> Bool {
+        let order = Preferences.itemOrder
+        let stored = Preferences.itemLayout
+        let layout = stored.placing(order.map(\.rawValue))
+        let changed = order != itemOrder || layout != itemLayout
+        itemOrder = order
+        itemLayout = layout
+        if layout != stored { Preferences.itemLayout = layout }
+        return changed
+    }
+
+    private func rebuildStatusItems() {
+        for controller in controllers.values { controller.remove() }
+        controllers = [:]
+        reconcileStatusItems()
     }
 
     private func applyEnginePreferences() {
@@ -68,7 +89,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func reconcileStatusItems() {
-        for kind in MeterKind.allCases.reversed() where controllers[kind] == nil {
+        for kind in itemOrder.reversed() where controllers[kind] == nil {
             controllers[kind] = makeController(for: kind)
         }
     }
@@ -79,11 +100,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let rebuild = ItemLayout.needsRebuild(
             shownBefore: shownKinds.map { Set($0.map(\.rawValue)) }, shownNow: Set(shown.map(\.rawValue)))
         shownKinds = shown
-        if rebuild {
-            for controller in controllers.values { controller.remove() }
-            controllers = [:]
-            reconcileStatusItems()
-        }
+        if rebuild { rebuildStatusItems() }
         for (kind, controller) in controllers {
             let visible = shown.contains(kind)
             controller.setVisible(visible)

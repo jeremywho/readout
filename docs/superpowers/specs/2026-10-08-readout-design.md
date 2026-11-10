@@ -45,7 +45,7 @@ Two calibration facts:
 
 ### 3.1 Menu bar items
 
-Each item is its own `NSStatusItem`, so macOS persists ⌘-drag reordering through `autosaveName`. macOS places an item that appears after its siblings at the far end of them (26 until the next launch; 27 for good, because it remembers a slot per item name). Two rules keep the group together and in order. When an update adds an item, every item gets a new `autosaveName` generation once, so macOS lays the group out afresh; this also resets a ⌘-drag arrangement of Readout's items. When an item reappears (re-enabled in Settings, or its sensor returns), all items are re-created in order. Default order matches section 2, with GPU (added later, not an iStat item in section 2) between the CPU graph and Memory.
+Each item is its own `NSStatusItem`, so macOS persists ⌘-drag reordering through `autosaveName`. macOS places an item that appears after its siblings at the far end of them. On 26.6 the next launch restores the creation order. On 27.2 an item added by an update stayed at the far end across relaunches, yet in a later test six already-placed names followed a new creation order; what 27.2 remembers is not understood. With new names for every item, both versions laid the group out in creation order each time it was tried. Two rules keep the group together and in order. When an update adds an item, every item gets a new `autosaveName` generation once, so macOS lays the group out afresh; this also resets a ⌘-drag arrangement of Readout's items. When an item reappears (re-enabled in Settings, or its sensor returns), all items are re-created in order. The order is the one set in Settings (section 3.3); items are created in that order, and a change of order starts a new generation too, so every item blinks once. Settings does not read a ⌘-drag back. Default order matches section 2, with GPU (added later, not an iStat item in section 2) between the CPU graph and Memory.
 
 | Item | Rendering |
 |---|---|
@@ -75,7 +75,7 @@ Clicking an item opens a borderless, non-activating `NSPanel` hosting SwiftUI. T
 
 A small SwiftUI window, stored in `UserDefaults`:
 
-- On/off toggle for each item.
+- On/off toggle for each item, and move up / move down buttons that set the items' order. The list reads top to bottom as the menu bar reads left to right. Buttons, not drag, so the order can be set from the keyboard.
 - Temperature unit: °F (default) or °C.
 - Network interface: Automatic (primary) by default, or a specific interface.
 - Launch at login, via `SMAppService.mainApp`. Registered automatically on the first launch (as iStat Menus does), once only: if the user turns it off later, it stays off.
