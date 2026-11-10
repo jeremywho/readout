@@ -12,11 +12,9 @@ struct TemperaturePanel: View {
             if store.temperatureAvailable, let reading {
                 HStack(spacing: 24) {
                     BigMetric(
-                        label: "CPU", value: MenuBarText.temperature(celsius: reading.summary.cpuCelsius, unit: unit),
-                        tint: .primary)
+                        label: "CPU", value: MenuBarText.temperature(celsius: reading.summary.cpuCelsius, unit: unit))
                     BigMetric(
-                        label: "GPU", value: MenuBarText.temperature(celsius: reading.summary.gpuCelsius, unit: unit),
-                        tint: .primary)
+                        label: "GPU", value: MenuBarText.temperature(celsius: reading.summary.gpuCelsius, unit: unit))
                 }
                 InfoRows(
                     rows: [
@@ -31,7 +29,8 @@ struct TemperaturePanel: View {
                             ("Fan \($0.offset + 1)", "\(Int($0.element.rounded())) rpm")
                         })
             } else {
-                Text("Temperature sensors are not available on this Mac.").font(.callout).foregroundStyle(.secondary)
+                Text("Temperature sensors are not available on this Mac.").font(PanelStyle.body).foregroundStyle(
+                    PanelStyle.secondary)
             }
         }
     }

@@ -7,9 +7,6 @@ struct HistoryGraph: View {
         case cpu([CoreLoad])
     }
 
-    static let downColor = Color(red: 0.27, green: 0.47, blue: 1.0)
-    static let upColor = Color(red: 1.0, green: 0.30, blue: 0.55)
-
     let series: Series
 
     var body: some View {
@@ -18,10 +15,10 @@ struct HistoryGraph: View {
             case .network(let samples):
                 let peak = max(samples.map { max($0.upBytesPerSecond, $0.downBytesPerSecond) }.max() ?? 0, 1)
                 context.stroke(
-                    path(samples.map(\.downBytesPerSecond), peak: peak, in: size), with: .color(Self.downColor),
+                    path(samples.map(\.downBytesPerSecond), peak: peak, in: size), with: .style(PanelStyle.download),
                     lineWidth: 1.5)
                 context.stroke(
-                    path(samples.map(\.upBytesPerSecond), peak: peak, in: size), with: .color(Self.upColor),
+                    path(samples.map(\.upBytesPerSecond), peak: peak, in: size), with: .style(PanelStyle.upload),
                     lineWidth: 1.5)
             case .cpu(let loads):
                 let step = size.width / CGFloat(max(loads.count, 1))
@@ -31,13 +28,13 @@ struct HistoryGraph: View {
                     let userHeight = size.height * CGFloat(load.user)
                     context.fill(
                         Path(CGRect(x: x, y: size.height - systemHeight, width: max(step, 1), height: systemHeight)),
-                        with: .color(Self.upColor))
+                        with: .style(PanelStyle.upload))
                     context.fill(
                         Path(
                             CGRect(
                                 x: x, y: size.height - systemHeight - userHeight, width: max(step, 1),
                                 height: userHeight)),
-                        with: .color(Self.downColor))
+                        with: .style(PanelStyle.download))
                 }
             }
         }
@@ -46,8 +43,8 @@ struct HistoryGraph: View {
         .background(RoundedRectangle(cornerRadius: 8).fill(.quaternary.opacity(0.5)))
         .overlay(alignment: .topTrailing) {
             if let peakLabel {
-                Text(peakLabel).font(.caption2).foregroundStyle(.secondary).padding(.horizontal, 6)
-                    .background(Capsule().fill(.background.opacity(0.8))).padding(6)
+                Text(peakLabel).font(PanelStyle.label).foregroundStyle(PanelStyle.secondary).padding(.horizontal, 6)
+                    .background(Capsule().fill(PanelStyle.surface.opacity(0.8))).padding(6)
             }
         }
     }

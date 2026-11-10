@@ -6,9 +6,9 @@ struct PanelTitle: View {
 
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
-            Text(title).font(.headline)
+            Text(title).font(PanelStyle.title)
             Spacer()
-            if let detail { Text(detail).font(.callout).foregroundStyle(.secondary).lineLimit(1) }
+            if let detail { Text(detail).font(PanelStyle.body).foregroundStyle(PanelStyle.secondary).lineLimit(1) }
         }
     }
 }
@@ -16,12 +16,13 @@ struct PanelTitle: View {
 struct BigMetric: View {
     let label: String
     let value: String
-    let tint: Color
+    var series: AdaptiveColor?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(label).font(.caption).foregroundStyle(.secondary)
-            Text(value).font(.system(.title2, design: .rounded).monospacedDigit()).foregroundStyle(tint)
+            Text(label).font(PanelStyle.label).foregroundStyle(PanelStyle.secondary)
+            Text(value).font(PanelStyle.metric)
+                .foregroundStyle(series.map(AnyShapeStyle.init) ?? AnyShapeStyle(.primary))
         }
     }
 }
@@ -33,12 +34,12 @@ struct InfoRows: View {
         Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 4) {
             ForEach(rows.indices, id: \.self) { index in
                 GridRow {
-                    Text(rows[index].0).foregroundStyle(.secondary)
+                    Text(rows[index].0).foregroundStyle(PanelStyle.secondary)
                     Text(rows[index].1).monospacedDigit().textSelection(.enabled).lineLimit(1)
                 }
             }
         }
-        .font(.callout)
+        .font(PanelStyle.body)
     }
 }
 
@@ -49,19 +50,19 @@ struct ProcessRows: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.caption).foregroundStyle(.secondary)
+            Text(title).font(PanelStyle.label).foregroundStyle(PanelStyle.secondary)
             if unavailable {
-                Text("unavailable").font(.callout).foregroundStyle(.secondary)
+                Text("unavailable").font(PanelStyle.body).foregroundStyle(PanelStyle.secondary)
             } else if rows.isEmpty {
-                Text("—").font(.callout).foregroundStyle(.secondary)
+                Text("—").font(PanelStyle.body).foregroundStyle(PanelStyle.secondary)
             } else {
                 ForEach(rows.indices, id: \.self) { index in
                     HStack {
                         Text(rows[index].0).lineLimit(1)
                         Spacer()
-                        Text(rows[index].1).monospacedDigit().foregroundStyle(.secondary)
+                        Text(rows[index].1).monospacedDigit().foregroundStyle(PanelStyle.secondary)
                     }
-                    .font(.callout)
+                    .font(PanelStyle.body)
                 }
             }
         }

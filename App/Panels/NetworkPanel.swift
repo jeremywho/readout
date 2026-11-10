@@ -13,8 +13,8 @@ struct NetworkPanel: View {
                 title: "Network",
                 detail: reading?.interface.map { "\(processes.interfaceDisplayName ?? $0) (\($0))" } ?? "Not connected")
             HStack(spacing: 24) {
-                BigMetric(label: "Upload", value: text.up, tint: HistoryGraph.upColor)
-                BigMetric(label: "Download", value: text.down, tint: HistoryGraph.downColor)
+                BigMetric(label: "Upload", value: text.up, series: PanelStyle.upload)
+                BigMetric(label: "Download", value: text.down, series: PanelStyle.download)
             }
             HistoryGraph(series: .network(store.networkHistory.elements))
             InfoRows(rows: [

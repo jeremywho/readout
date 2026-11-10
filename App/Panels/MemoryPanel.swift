@@ -9,9 +9,7 @@ struct MemoryPanel: View {
         let reading = store.snapshot.memory
         VStack(alignment: .leading, spacing: 10) {
             PanelTitle(title: "Memory", detail: reading.map { ByteCountText.memory($0.physicalBytes) })
-            BigMetric(
-                label: "Pressure", value: MenuBarText.percent(reading.map { Double($0.pressurePercent) }),
-                tint: .primary)
+            BigMetric(label: "Pressure", value: MenuBarText.percent(reading.map { Double($0.pressurePercent) }))
             if let breakdown = reading?.breakdown {
                 InfoRows(rows: [
                     ("Used", ByteCountText.memory(breakdown.used)),

@@ -8,11 +8,11 @@ enum ScreenshotExporter {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
             let store = MetricsStore.fixture()
             let processes = ProcessMonitor.fixture()
-            let variants: [(String, NSAppearance.Name, ColorScheme, Color)] = [
-                ("dark", .darkAqua, .dark, Color(white: 0.16)),
-                ("light", .aqua, .light, Color(white: 0.96)),
+            let variants: [(String, NSAppearance.Name, ColorScheme)] = [
+                ("dark", .darkAqua, .dark),
+                ("light", .aqua, .light),
             ]
-            for (name, appearanceName, scheme, background) in variants {
+            for (name, appearanceName, scheme) in variants {
                 guard let appearance = NSAppearance(named: appearanceName),
                     let bar = menuBarPNG(store: store, appearance: appearance)
                 else { return false }
@@ -21,9 +21,9 @@ enum ScreenshotExporter {
                     let view = PanelHost(kind: kind, actions: .inert)
                         .environment(store)
                         .environment(processes)
-                        .environment(\.colorScheme, scheme)
                         .fixedSize()
-                        .background(background)
+                        .background(PanelStyle.surface)
+                        .environment(\.colorScheme, scheme)
                     let renderer = ImageRenderer(content: view)
                     renderer.scale = 2
                     guard let image = renderer.cgImage,

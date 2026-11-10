@@ -59,7 +59,7 @@ Text and outlines follow the menu bar's effective appearance (light or dark), an
 
 ### 3.2 Dropdown panels
 
-Clicking an item opens a borderless, non-activating `NSPanel` hosting SwiftUI. The panel hangs just below the menu bar and never covers it. One panel is open at a time. It closes on a click anywhere outside it, a second click on its item, Esc, an app switch or a space change. Every panel ends with a footer: `Settings…`, `Check for Updates…`, `Quit Readout`. Work that is expensive (subprocesses, the public-IP fetch) runs only while a panel is open and stops when it closes.
+Clicking an item opens a borderless, non-activating `NSPanel` hosting SwiftUI. The panel hangs just below the menu bar and never covers it. One panel is open at a time. Its surface is opaque, because a translucent one takes on whatever is behind it and no text colour then keeps its contrast. Panel colours come from `PanelPalette` (a blue and a pink series colour, a link blue and a secondary grey, each with a light and a dark value); a test holds every text colour to at least 4.5:1 on the surface. Panel type sizes come from `PanelStyle`: 15 pt title, 22 pt headline figures, 13 pt rows, 12 pt labels. It closes on a click anywhere outside it, a second click on its item, Esc, an app switch or a space change. Every panel ends with a footer: `Settings…`, `Check for Updates…`, `Quit Readout`. Work that is expensive (subprocesses, the public-IP fetch) runs only while a panel is open and stops when it closes.
 
 | Panel | Contents |
 |---|---|

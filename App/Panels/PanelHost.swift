@@ -24,8 +24,8 @@ struct PanelHost: View {
             Divider()
             PanelFooter(actions: actions)
         }
-        .padding(14)
-        .frame(width: 320)
+        .padding(PanelStyle.padding)
+        .frame(width: PanelStyle.width)
     }
 }
 
@@ -40,7 +40,7 @@ struct PanelFooter: View {
             Button("Quit Readout") { actions.quit() }
         }
         .buttonStyle(.plain)
-        .foregroundStyle(Color.accentColor)
-        .font(.callout)
+        .foregroundStyle(PanelStyle.link)
+        .font(PanelStyle.body)
     }
 }

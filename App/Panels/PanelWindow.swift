@@ -2,9 +2,6 @@ import AppKit
 import SwiftUI
 
 final class PanelWindow: NSPanel {
-    private static let cornerRadius: CGFloat = 12
-    private let background = NSVisualEffectView()
-
     init() {
         super.init(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: true)
         level = .popUpMenu
@@ -15,41 +12,27 @@ final class PanelWindow: NSPanel {
         isReleasedWhenClosed = false
         animationBehavior = .none
         collectionBehavior = [.transient, .ignoresCycle, .fullScreenAuxiliary]
-        background.material = .popover
-        background.blendingMode = .behindWindow
-        background.state = .active
-        background.maskImage = Self.roundedMask
-        contentView = background
+        contentView = container
     }
+
+    private let container = NSView()
 
     override var canBecomeKey: Bool { true }
 
     /// Hiding the window does not end the panel's `.task` work; removing the SwiftUI tree (nil) does.
     func setContent(_ content: AnyView?) {
-        for subview in background.subviews { subview.removeFromSuperview() }
+        for subview in container.subviews { subview.removeFromSuperview() }
         guard let content else { return }
-        let hosting = NSHostingView(rootView: content.fixedSize())
+        let surface = RoundedRectangle(cornerRadius: PanelStyle.cornerRadius, style: .continuous)
+        let hosting = NSHostingView(rootView: content.fixedSize().background(surface.fill(PanelStyle.surface)))
         hosting.translatesAutoresizingMaskIntoConstraints = false
-        background.addSubview(hosting)
+        container.addSubview(hosting)
         NSLayoutConstraint.activate([
-            hosting.leadingAnchor.constraint(equalTo: background.leadingAnchor),
-            hosting.trailingAnchor.constraint(equalTo: background.trailingAnchor),
-            hosting.topAnchor.constraint(equalTo: background.topAnchor),
-            hosting.bottomAnchor.constraint(equalTo: background.bottomAnchor),
+            hosting.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            hosting.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            hosting.topAnchor.constraint(equalTo: container.topAnchor),
+            hosting.bottomAnchor.constraint(equalTo: container.bottomAnchor),
         ])
         setContentSize(hosting.fittingSize)
     }
-
-    private static let roundedMask: NSImage = {
-        let edge = cornerRadius * 2 + 1
-        let image = NSImage(size: NSSize(width: edge, height: edge), flipped: false) { rect in
-            NSColor.black.setFill()
-            NSBezierPath(roundedRect: rect, xRadius: cornerRadius, yRadius: cornerRadius).fill()
-            return true
-        }
-        image.capInsets = NSEdgeInsets(
-            top: cornerRadius, left: cornerRadius, bottom: cornerRadius, right: cornerRadius)
-        image.resizingMode = .stretch
-        return image
-    }()
 }

@@ -11,14 +11,13 @@ struct CPUPanel: View {
         VStack(alignment: .leading, spacing: 10) {
             PanelTitle(title: "CPU", detail: reading.map { "\($0.cores.count) cores" })
             HStack(spacing: 24) {
-                BigMetric(
-                    label: "Total", value: MenuBarText.percent(reading.map { $0.total.total * 100 }), tint: .primary)
+                BigMetric(label: "Total", value: MenuBarText.percent(reading.map { $0.total.total * 100 }))
                 BigMetric(
                     label: "User", value: MenuBarText.percent(reading.map { $0.total.user * 100 }),
-                    tint: HistoryGraph.downColor)
+                    series: PanelStyle.download)
                 BigMetric(
                     label: "System", value: MenuBarText.percent(reading.map { $0.total.system * 100 }),
-                    tint: HistoryGraph.upColor)
+                    series: PanelStyle.upload)
             }
             HistoryGraph(series: .cpu(Array(store.cpuHistory.elements.suffix(120))))
             if let reading {
@@ -35,20 +34,21 @@ struct CPUPanel: View {
         .task { await processes.run(.cpu, interface: nil) }
     }
 
-    /// 64 bars at their 2 pt minimum still fit the panel's 292 pt content width.
+    /// 64 bars at their 2 pt minimum need 254 pt, which fits the panel's content width.
     private static let maxBarsPerRow = 64
 
     private func coreBars(_ group: CoreGroup, loads: [CoreLoad]) -> some View {
         let rows = CoreTopology.rows(group.cores.filter(loads.indices.contains), maxPerRow: Self.maxBarsPerRow)
         return VStack(alignment: .leading, spacing: 3) {
-            Text(group.name.map { "\($0) cores" } ?? "Cores").font(.caption).foregroundStyle(.secondary)
+            Text(group.name.map { "\($0) cores" } ?? "Cores").font(PanelStyle.label).foregroundStyle(
+                PanelStyle.secondary)
             ForEach(rows.indices, id: \.self) { row in
                 HStack(alignment: .bottom, spacing: 2) {
                     ForEach(rows[row], id: \.self) { core in
                         VStack(spacing: 0) {
                             Spacer(minLength: 0)
-                            Rectangle().fill(HistoryGraph.downColor).frame(height: 28 * CGFloat(loads[core].user))
-                            Rectangle().fill(HistoryGraph.upColor).frame(height: 28 * CGFloat(loads[core].system))
+                            Rectangle().fill(PanelStyle.download).frame(height: 28 * CGFloat(loads[core].user))
+                            Rectangle().fill(PanelStyle.upload).frame(height: 28 * CGFloat(loads[core].system))
                         }
                         .frame(minWidth: 2, maxWidth: 8)
                         .frame(height: 28)
