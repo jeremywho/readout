@@ -5,7 +5,12 @@ import ReadoutSystem
 extension MetricsStore {
     static func fixture() -> MetricsStore {
         let store = MetricsStore()
-        let kinds: [CoreKind] = Array("EEPPPPPPPPEEPPPPPPPP").map { CoreKind(clusterType: $0) }
+        let groups = CoreTopology.groups(
+            clusterTypes: Array("EEPPPPPPPPEEPPPPPPPP"),
+            levels: [
+                PerformanceLevel(name: "Performance", coreCount: 16),
+                PerformanceLevel(name: "Efficiency", coreCount: 4),
+            ], coreCount: 20)
         for index in 0..<600 {
             let t = Double(index)
             let up = index == 599 ? 25_000 : 25_000 + 15_000 * sin(t / 9)
@@ -23,7 +28,7 @@ extension MetricsStore {
                             upBytesPerSecond: up, downBytesPerSecond: max(down, 0), upBytes: 0, downBytes: 0),
                         sessionBytesIn: 1_830_000_000, sessionBytesOut: 412_000_000),
                     cpu: CPUReading(
-                        total: CPUMath.average(cores), cores: cores, kinds: kinds, loadAverage: [2.31, 2.05, 1.88]),
+                        total: CPUMath.average(cores), cores: cores, groups: groups, loadAverage: [2.31, 2.05, 1.88]),
                     memory: MemoryReading(
                         pressurePercent: 5,
                         breakdown: MemoryBreakdown(

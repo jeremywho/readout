@@ -80,7 +80,7 @@ int readout_read_core_kinds(char *out, int capacity) {
     IOObjectRelease(children);
     IOObjectRelease(cpus);
     for (int i = 0; i < count; i++) {
-        if (out[i] != 'P' && out[i] != 'E') {
+        if (out[i] < 'A' || out[i] > 'Z') {
             return -1;
         }
     }

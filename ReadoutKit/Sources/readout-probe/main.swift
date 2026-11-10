@@ -14,7 +14,11 @@ if arguments.contains("--sensors") {
 if arguments.contains("--check") {
     let result = await SelfTest.run()
     print(result.report)
-    print("cores: " + CPUSampler.readKinds().map { $0 == .efficiency ? "E" : "P" }.joined())
+    let clusterTypes = CPUSampler.readClusterTypes()
+    let groups = CoreTopology.groups(
+        clusterTypes: clusterTypes, levels: CPUSampler.readLevels(), coreCount: ProcessInfo.processInfo.processorCount)
+    print("cores: " + String(clusterTypes))
+    print("core groups: " + groups.map { "\($0.name ?? "unnamed") x\($0.cores.count)" }.joined(separator: ", "))
     exit(result.passed ? 0 : 1)
 }
 

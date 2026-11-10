@@ -34,13 +34,13 @@ import Testing
         #expect(buffer.prefix(Int(count)).allSatisfy { $0.idle > 0 })
     }
 
-    @Test func coreKindsAreUnavailableOrMatchTheCoreCount() {
-        var kinds = [CChar](repeating: 0, count: 512)
-        let count = kinds.withUnsafeMutableBufferPointer { readout_read_core_kinds($0.baseAddress, 512) }
-        let valid = kinds.prefix(Int(max(count, 0))).allSatisfy {
-            $0 == CChar(UInt8(ascii: "P")) || $0 == CChar(UInt8(ascii: "E"))
+    @Test func coreClusterTypesAreUnavailableOrALetterForEveryCore() {
+        var types = [CChar](repeating: 0, count: 512)
+        let count = types.withUnsafeMutableBufferPointer { readout_read_core_kinds($0.baseAddress, 512) }
+        let letters = types.prefix(Int(max(count, 0))).allSatisfy {
+            (UInt8(ascii: "A")...UInt8(ascii: "Z")).contains(UInt8(bitPattern: $0))
         }
-        #expect(count == -1 || (Int(count) == ProcessInfo.processInfo.processorCount && valid))
+        #expect(count == -1 || (Int(count) == ProcessInfo.processInfo.processorCount && letters))
     }
 
     @Test func vmPagesAndPressureAreReadable() {

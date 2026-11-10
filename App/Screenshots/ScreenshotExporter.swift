@@ -22,6 +22,7 @@ enum ScreenshotExporter {
                         .environment(store)
                         .environment(processes)
                         .environment(\.colorScheme, scheme)
+                        .fixedSize()
                         .background(background)
                     let renderer = ImageRenderer(content: view)
                     renderer.scale = 2

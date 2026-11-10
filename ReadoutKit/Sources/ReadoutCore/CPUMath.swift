@@ -25,15 +25,6 @@ public struct CoreLoad: Sendable, Equatable {
     }
 }
 
-public enum CoreKind: Sendable, Equatable {
-    case performance
-    case efficiency
-
-    public init(clusterType: Character) {
-        self = clusterType == "E" ? .efficiency : .performance
-    }
-}
-
 public enum CPUMath {
     public static func load(previous: CoreTicks, current: CoreTicks) -> CoreLoad {
         let user =

@@ -20,7 +20,7 @@ A small, open-source macOS menu bar system monitor: network throughput first, pl
 - **Network**: upload and download rate of the primary interface, a 10-minute history, local and public IP, and the top apps by bandwidth.
 - **CPU temperature**: the average of the CPU P-core sensors, plus GPU temperature, the hottest sensor and fan speed.
 - **Disk**: startup volume usage (purgeable space counts as free) and read/write throughput.
-- **CPU**: a user/system history graph, per-core load split into performance and efficiency cores, and the top processes.
+- **CPU**: a user/system history graph, per-core load split into the chip's core tiers, and the top processes.
 - **Memory**: memory pressure, the used/wired/compressed breakdown, swap, and the top processes.
 
 ## Install

@@ -66,7 +66,7 @@ Clicking an item opens a borderless, non-activating `NSPanel` hosting SwiftUI. T
 | Network | Primary interface name and type (Wi-Fi/Ethernet/other). Local IPv4/IPv6. Public IP, fetched on open from `https://api.ipify.org` and cached for 5 minutes. Up/down history graph covering the last 10 minutes. Session totals since launch. Top 5 processes by bandwidth from `nettop`, sampled every 2 s while open. |
 | CPU temp | CPU-cluster average, GPU average, hottest sensor (name + value), fan RPM. Fan RPM is omitted on fanless Macs. |
 | Disk | Used / free / total for the boot volume. Read/write throughput summed across all block storage devices. |
-| CPU | Total, user and system %. Per-core bars, grouped into performance and efficiency cores. Load averages. Top 5 processes by CPU from `ps`. |
+| CPU | Total, user and system %. Per-core bars, grouped into the core tiers the system reports (Performance and Efficiency through M4; Super and Performance on M5), each named from `hw.perflevelN.name`. The bars narrow so every core fits the panel. Load averages. Top 5 processes by CPU from `ps`. |
 | Memory | Pressure %. Used, wired, compressed and cached memory. Swap used. Top 5 processes by resident memory from `ps`. |
 
 ### 3.3 Settings

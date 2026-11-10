@@ -44,10 +44,4 @@ import Testing
         #expect(average == CoreLoad(user: 0.375, system: 0.25))
         #expect(CPUMath.average([]) == .idle)
     }
-
-    @Test func clusterTypeMapsToKind() {
-        #expect(CoreKind(clusterType: "E") == .efficiency)
-        #expect(CoreKind(clusterType: "P") == .performance)
-        #expect(CoreKind(clusterType: "\0") == .performance)
-    }
 }
