@@ -10,6 +10,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let store = MetricsStore()
     private let processes = ProcessMonitor()
     private let updater = Updater()
+    private let presenter = PanelPresenter()
     private var controllers: [MeterKind: StatusItemController] = [:]
     private var samplingTask: Task<Void, Never>?
     private var defaultsObserver: NSObjectProtocol?
@@ -19,6 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Preferences.registerDefaults()
         Preferences.launchAtLoginDefault.perform { try SMAppService.mainApp.register() }
         preferenceFingerprint = preferencesFingerprint()
+        presenter.statusItemWindows = { [weak self] in self?.controllers.values.compactMap(\.buttonWindow) ?? [] }
         reconcileStatusItems()
         applyEnginePreferences()
         defaultsObserver = NotificationCenter.default.addObserver(
@@ -79,11 +81,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func makeController(for kind: MeterKind) -> StatusItemController {
         let actions = PanelActions(
-            openSettings: { [weak self] in self?.settingsWindow.show() },
-            checkForUpdates: { [weak self] in self?.updater.checkForUpdates() },
+            openSettings: { [weak self] in
+                self?.presenter.close()
+                self?.settingsWindow.show()
+            },
+            checkForUpdates: { [weak self] in
+                self?.presenter.close()
+                self?.updater.checkForUpdates()
+            },
             quit: { NSApp.terminate(nil) }
         )
         let panel = PanelHost(kind: kind, actions: actions).environment(store).environment(processes)
-        return StatusItemController(kind: kind, panel: AnyView(panel))
+        return StatusItemController(kind: kind, panel: AnyView(panel), presenter: presenter)
     }
 }

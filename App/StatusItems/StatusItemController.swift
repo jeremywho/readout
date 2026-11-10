@@ -6,21 +6,24 @@ final class StatusItemController: NSObject {
     let kind: MeterKind
     private let item: NSStatusItem
     private let meter = MeterView()
-    private let popover = NSPopover()
+    private let panel: AnyView
+    private let presenter: PanelPresenter
 
-    init(kind: MeterKind, panel: AnyView) {
+    init(kind: MeterKind, panel: AnyView, presenter: PanelPresenter) {
         self.kind = kind
+        self.panel = panel
+        self.presenter = presenter
         item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         super.init()
         item.autosaveName = kind.autosaveName
-        popover.behavior = .transient
-        popover.contentViewController = NSHostingController(rootView: panel)
         guard let button = item.button else { return }
         button.addSubview(meter)
         button.target = self
         button.action = #selector(togglePanel(_:))
         button.setAccessibilityLabel(kind.title)
     }
+
+    var buttonWindow: NSWindow? { item.button?.window }
 
     func update(_ content: MeterContent) {
         guard content != meter.content else { return }
@@ -31,20 +34,19 @@ final class StatusItemController: NSObject {
     }
 
     func setVisible(_ visible: Bool) {
-        if item.isVisible != visible { item.isVisible = visible }
+        guard item.isVisible != visible else { return }
+        if !visible { presenter.close(kind) }
+        item.isVisible = visible
     }
 
     func remove() {
-        popover.performClose(nil)
+        presenter.close(kind)
         NSStatusBar.system.removeStatusItem(item)
     }
 
     @objc private func togglePanel(_ sender: NSStatusBarButton) {
-        if popover.isShown {
-            popover.performClose(sender)
-        } else {
-            popover.show(relativeTo: sender.bounds, of: sender, preferredEdge: .minY)
-            NSApp.activate()
-        }
+        guard let window = sender.window, let screen = window.screen ?? NSScreen.main else { return }
+        let anchor = window.convertToScreen(sender.convert(sender.bounds, to: nil))
+        presenter.toggle(kind, content: panel, anchor: anchor, visibleFrame: screen.visibleFrame)
     }
 }

@@ -59,7 +59,7 @@ Text and outlines follow the menu bar's effective appearance (light or dark), an
 
 ### 3.2 Dropdown panels
 
-Clicking an item opens an `NSPopover` hosting SwiftUI. Every panel ends with a footer: `Settings…`, `Check for Updates…`, `Quit Readout`. Work that is expensive (subprocesses, the public-IP fetch) runs only while a panel is open and stops when it closes.
+Clicking an item opens a borderless, non-activating `NSPanel` hosting SwiftUI. The panel hangs just below the menu bar and never covers it. One panel is open at a time. It closes on a click anywhere outside it, a second click on its item, Esc, an app switch or a space change. Every panel ends with a footer: `Settings…`, `Check for Updates…`, `Quit Readout`. Work that is expensive (subprocesses, the public-IP fetch) runs only while a panel is open and stops when it closes.
 
 | Panel | Contents |
 |---|---|
