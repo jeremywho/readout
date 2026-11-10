@@ -8,9 +8,6 @@ enum MeterDrawing {
     static let captionFont = NSFont.systemFont(ofSize: 8.5, weight: .medium)
     static let valueFont = NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .regular)
     static let networkFont = NSFont.monospacedDigitSystemFont(ofSize: 9.5, weight: .regular)
-    static let userColor = color(PanelPalette.download)
-    static let systemColor = color(PanelPalette.upload)
-    static let graphBacking = color(PanelPalette.graphBacking, alpha: PanelPalette.graphBackingAlpha)
     private static let horizontalPadding: CGFloat = 4
 
     static func width(for content: MeterContent) -> CGFloat {
@@ -49,13 +46,6 @@ enum MeterDrawing {
         }
     }
 
-    private static func color(_ color: AdaptiveRGB, alpha: Double = 1) -> NSColor {
-        NSColor(name: nil) { appearance in
-            let rgb = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? color.dark : color.light
-            return NSColor(srgbRed: rgb.red, green: rgb.green, blue: rgb.blue, alpha: alpha)
-        }
-    }
-
     private static func textWidth(_ text: String, _ font: NSFont) -> CGFloat {
         (text as NSString).size(withAttributes: [.font: font]).width
     }
@@ -80,23 +70,20 @@ enum MeterDrawing {
         }
     }
 
+    /// The bars use the label colour, the one ink macOS keeps readable on the translucent menu bar whatever the
+    /// wallpaper. A second tone for user against system cannot be, so the bars show the total.
     private static func drawGraph(_ loads: [CoreLoad], in rect: NSRect) {
         let frame = NSRect(x: rect.minX, y: rect.minY + 3, width: rect.width, height: rect.height - 6)
-        let outline = NSBezierPath(roundedRect: frame.insetBy(dx: 0.5, dy: 0.5), xRadius: 3, yRadius: 3)
-        graphBacking.setFill()
-        outline.fill()
         NSColor.labelColor.withAlphaComponent(0.55).setStroke()
+        let outline = NSBezierPath(roundedRect: frame.insetBy(dx: 0.5, dy: 0.5), xRadius: 3, yRadius: 3)
         outline.lineWidth = 1
         outline.stroke()
         let plot = frame.insetBy(dx: 2, dy: 2)
+        NSColor.labelColor.setFill()
         for (index, load) in loads.suffix(graphColumns).reversed().enumerated() {
             let x = plot.maxX - CGFloat(index + 1) * 3 + 1
-            let systemHeight = plot.height * CGFloat(min(max(load.system, 0), 1))
-            let userHeight = plot.height * CGFloat(min(max(load.user, 0), 1 - load.system))
-            systemColor.setFill()
-            NSRect(x: x, y: plot.minY, width: 2, height: systemHeight).fill()
-            userColor.setFill()
-            NSRect(x: x, y: plot.minY + systemHeight, width: 2, height: userHeight).fill()
+            let height = max(plot.height * CGFloat(min(max(load.total, 0), 1)), 1)
+            NSRect(x: x, y: plot.minY, width: 2, height: height).fill()
         }
     }
 

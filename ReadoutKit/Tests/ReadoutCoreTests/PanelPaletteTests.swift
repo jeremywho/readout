@@ -32,35 +32,6 @@ import Testing
         #expect(replaced.contrast(with: PanelPalette.surface.light) < PanelPalette.minimumTextContrast)
     }
 
-    private func worstGraphContrast(alpha: Double) -> Double {
-        var worst = Double.infinity
-        for backdrop in [RGB(white: 0), RGB(white: 1)] {
-            for series in [PanelPalette.download, PanelPalette.upload] {
-                let light = PanelPalette.graphBacking.light.composited(over: backdrop, alpha: alpha)
-                let dark = PanelPalette.graphBacking.dark.composited(over: backdrop, alpha: alpha)
-                worst = min(worst, series.light.contrast(with: light), series.dark.contrast(with: dark))
-            }
-        }
-        return worst
-    }
-
-    @Test func theGraphSeriesStayVisibleOnTheirBackingOverAnyWallpaper() {
-        #expect(worstGraphContrast(alpha: PanelPalette.graphBackingAlpha) >= PanelPalette.minimumGraphicContrast)
-    }
-
-    @Test func aThinnerBackingOrNoneFailsTheSameCheck() {
-        #expect(worstGraphContrast(alpha: 0.6) < PanelPalette.minimumGraphicContrast)
-        #expect(worstGraphContrast(alpha: 0) < PanelPalette.minimumGraphicContrast)
-    }
-
-    @Test func compositingBlendsTowardsTheBackdrop() {
-        let black = RGB(white: 0)
-        let white = RGB(white: 1)
-        #expect(black.composited(over: white, alpha: 1) == black)
-        #expect(black.composited(over: white, alpha: 0) == white)
-        #expect(isClose(black.composited(over: white, alpha: 0.7).red, 0.3))
-    }
-
     @Test func eachSeriesKeepsItsHueAcrossAppearances() {
         for color in [PanelPalette.download, PanelPalette.upload] {
             #expect(abs(hue(color.light) - hue(color.dark)) < 6)
