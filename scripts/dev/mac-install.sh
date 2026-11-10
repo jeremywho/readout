@@ -17,8 +17,10 @@ app="$work/unpacked/Readout.app"
 found="$(defaults read "$app/Contents/Info.plist" CFBundleShortVersionString)"
 [ "$found" = "$version" ] || fail "archive holds version $found, not $version"
 codesign --verify --deep --strict "$app" || fail "signature does not verify"
-spctl -a -t exec -vv "$app" 2>&1 | grep -q "source=Notarized Developer ID" || fail "not a notarized Developer ID build"
-codesign -dv --verbose=4 "$app" 2>&1 | grep -q "TeamIdentifier=PCWH4GSLHZ" || fail "unexpected signing team"
+assessment="$(spctl -a -t exec -vv "$app" 2>&1)" || fail "Gatekeeper rejects the build: $assessment"
+grep -q "source=Notarized Developer ID" <<<"$assessment" || fail "not a notarized Developer ID build: $assessment"
+signature="$(codesign -dv --verbose=4 "$app" 2>&1)"
+grep -q "TeamIdentifier=PCWH4GSLHZ" <<<"$signature" || fail "unexpected signing team: $signature"
 pkill -x Readout || true
 sleep 1
 if [ -d /Applications/Readout.app ]; then
