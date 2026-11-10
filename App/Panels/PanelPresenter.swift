@@ -4,9 +4,6 @@ import SwiftUI
 
 @MainActor
 final class PanelPresenter {
-    /// Windows hosting Readout's own menu bar items. A click in one belongs to that item's action, not to dismissal.
-    var statusItemWindows: () -> [NSWindow] = { [] }
-
     private static let escapeKeyCode: UInt16 = 53
     private let window = PanelWindow()
     private var openKind: MeterKind?
@@ -55,8 +52,7 @@ final class PanelPresenter {
                 MainActor.assumeIsolated { self?.close() }
                 return nil
             }
-            let target = event.window.map(ObjectIdentifier.init)
-            MainActor.assumeIsolated { self?.closeUnlessOwnWindow(target) }
+            MainActor.assumeIsolated { self?.closeUnlessOwnWindow(event.window) }
             return event
         }
         let global = NSEvent.addGlobalMonitorForEvents(matching: mouseDowns) { [weak self] _ in
@@ -88,9 +84,9 @@ final class PanelPresenter {
         observations.append((center, token))
     }
 
-    private func closeUnlessOwnWindow(_ target: ObjectIdentifier?) {
-        let own = ([window] + statusItemWindows()).map(ObjectIdentifier.init)
-        if let target, own.contains(target) { return }
+    /// A click on one of Readout's menu bar items (a status bar window per display) belongs to that item's action.
+    private func closeUnlessOwnWindow(_ target: NSWindow?) {
+        if let target, target === window || target.level == .statusBar { return }
         close()
     }
 }

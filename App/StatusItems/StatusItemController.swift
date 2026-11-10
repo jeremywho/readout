@@ -1,4 +1,5 @@
 import AppKit
+import ReadoutCore
 import SwiftUI
 
 @MainActor
@@ -23,8 +24,6 @@ final class StatusItemController: NSObject {
         button.setAccessibilityLabel(kind.title)
     }
 
-    var buttonWindow: NSWindow? { item.button?.window }
-
     func update(_ content: MeterContent) {
         guard content != meter.content else { return }
         meter.content = content
@@ -45,8 +44,13 @@ final class StatusItemController: NSObject {
     }
 
     @objc private func togglePanel(_ sender: NSStatusBarButton) {
-        guard let window = sender.window, let screen = window.screen ?? NSScreen.main else { return }
-        let anchor = window.convertToScreen(sender.convert(sender.bounds, to: nil))
+        let pointer = NSEvent.mouseLocation
+        let clicked = NSScreen.screens.first { NSMouseInRect(pointer, $0.frame, false) }
+        guard let screen = clicked ?? sender.window?.screen ?? NSScreen.main else { return }
+        let clickedCopy = NSApp.currentEvent?.window.flatMap { $0.level == .statusBar ? $0 : nil }
+        let anchor = PanelPlacement.anchor(
+            itemFrames: [clickedCopy, sender.window].compactMap { $0?.frame }, pointer: pointer,
+            screenFrame: screen.frame)
         presenter.toggle(kind, content: panel, anchor: anchor, visibleFrame: screen.visibleFrame)
     }
 }

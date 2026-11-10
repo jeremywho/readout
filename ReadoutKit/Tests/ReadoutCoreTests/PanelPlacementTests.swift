@@ -55,6 +55,29 @@ import Testing
         #expect(frame.maxY == secondScreen.maxY - PanelPlacement.gap)
     }
 
+    @Test func anchorsOnTheItemCopyThatIsOnTheClickedScreen() {
+        let first = CGRect(x: 0, y: 0, width: 1920, height: 1080)
+        let second = CGRect(x: 1920, y: 0, width: 1920, height: 1080)
+        let copy = CGRect(x: 3202, y: 1050, width: 82, height: 30)
+        let pointer = CGPoint(x: 3250, y: 1070)
+        #expect(PanelPlacement.anchor(itemFrames: [copy, menuBarItem], pointer: pointer, screenFrame: second) == copy)
+        #expect(
+            PanelPlacement.anchor(itemFrames: [copy, menuBarItem], pointer: pointer, screenFrame: first) == menuBarItem)
+    }
+
+    @Test func anchorsUnderThePointerWhenNoItemCopyIsOnTheClickedScreen() {
+        let second = CGRect(x: 1920, y: 0, width: 1920, height: 1080)
+        let parked = CGRect(x: 3840, y: 1050, width: 82, height: 30)
+        let anchor = PanelPlacement.anchor(
+            itemFrames: [parked, menuBarItem], pointer: CGPoint(x: 3200, y: 1070), screenFrame: second)
+        #expect(anchor.midX == 3200)
+        #expect(anchor.minY == second.maxY)
+        let frame = PanelPlacement.frame(
+            anchor: anchor, size: size, visibleFrame: CGRect(x: 1920, y: 0, width: 1920, height: 1050))
+        #expect(frame.maxY == 1050 - PanelPlacement.gap)
+        #expect(frame.midX == 3200)
+    }
+
     @Test func pinsToTheLeftMarginWhenThePanelIsWiderThanTheScreen() {
         let narrow = CGRect(x: 0, y: 0, width: 300, height: 600)
         let frame = PanelPlacement.frame(

@@ -20,7 +20,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Preferences.registerDefaults()
         Preferences.launchAtLoginDefault.perform { try SMAppService.mainApp.register() }
         preferenceFingerprint = preferencesFingerprint()
-        presenter.statusItemWindows = { [weak self] in self?.controllers.values.compactMap(\.buttonWindow) ?? [] }
         reconcileStatusItems()
         applyEnginePreferences()
         defaultsObserver = NotificationCenter.default.addObserver(
