@@ -91,16 +91,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// macOS honors `activate()` only while the panel is still on screen; after it closes, the next window opens
+    /// behind the frontmost app.
+    private func leavePanel(for action: (AppDelegate) -> Void) {
+        NSApp.activate()
+        presenter.close()
+        action(self)
+    }
+
     private func makeController(for kind: MeterKind) -> StatusItemController {
         let actions = PanelActions(
-            openSettings: { [weak self] in
-                self?.presenter.close()
-                self?.settingsWindow.show()
-            },
-            checkForUpdates: { [weak self] in
-                self?.presenter.close()
-                self?.updater.checkForUpdates()
-            },
+            openSettings: { [weak self] in self?.leavePanel { $0.settingsWindow.show() } },
+            checkForUpdates: { [weak self] in self?.leavePanel { $0.updater.checkForUpdates() } },
             quit: { NSApp.terminate(nil) }
         )
         let panel = PanelHost(kind: kind, actions: actions).environment(store).environment(processes)
