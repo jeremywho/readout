@@ -3,6 +3,7 @@ enum MeterKind: String, CaseIterable, Identifiable, Sendable {
     case network
     case disk
     case cpu
+    case gpu
     case memory
 
     var id: String { rawValue }
@@ -15,6 +16,7 @@ enum MeterKind: String, CaseIterable, Identifiable, Sendable {
         case .network: "Network"
         case .disk: "Disk"
         case .cpu: "CPU"
+        case .gpu: "GPU"
         case .memory: "Memory"
         }
     }

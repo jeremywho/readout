@@ -72,7 +72,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func refreshStatusItems() {
         let unit = Preferences.temperatureUnit
         for (kind, controller) in controllers {
-            let visible = Preferences.isEnabled(kind) && (kind != .temperature || store.temperatureAvailable)
+            let visible = Preferences.isEnabled(kind) && store.isAvailable(kind)
             controller.setVisible(visible)
             if visible { controller.update(MeterContentBuilder.content(for: kind, store: store, unit: unit)) }
         }

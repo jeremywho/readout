@@ -6,16 +6,18 @@ public struct MetricsSnapshot: Sendable, Equatable {
     public var memory: MemoryReading?
     public var disk: DiskReading?
     public var temperature: TemperatureReading?
+    public var gpu: GPUReading?
 
     public init(
         network: NetworkReading? = nil, cpu: CPUReading? = nil, memory: MemoryReading? = nil,
-        disk: DiskReading? = nil, temperature: TemperatureReading? = nil
+        disk: DiskReading? = nil, temperature: TemperatureReading? = nil, gpu: GPUReading? = nil
     ) {
         self.network = network
         self.cpu = cpu
         self.memory = memory
         self.disk = disk
         self.temperature = temperature
+        self.gpu = gpu
     }
 }
 
@@ -25,6 +27,7 @@ public actor SamplingEngine {
     private let memory = MemorySampler()
     private let disk = DiskSampler()
     private let temperature = SMCSampler()
+    private let gpu = GPUSampler()
     private let clock = ContinuousClock()
     private let start: ContinuousClock.Instant
 
@@ -44,7 +47,8 @@ public actor SamplingEngine {
             cpu: cpu.sample(),
             memory: memory.sample(),
             disk: disk.sample(at: seconds),
-            temperature: temperature.sample(at: seconds)
+            temperature: temperature.sample(at: seconds),
+            gpu: gpu.sample()
         )
     }
 

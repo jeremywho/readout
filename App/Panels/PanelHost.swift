@@ -17,6 +17,7 @@ struct PanelHost: View {
             switch kind {
             case .network: NetworkPanel()
             case .cpu: CPUPanel()
+            case .gpu: GPUPanel()
             case .memory: MemoryPanel()
             case .disk: DiskPanel()
             case .temperature: TemperaturePanel()

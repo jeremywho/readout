@@ -2,7 +2,7 @@
 
 Status: draft for review · Date: 2026-10-08 · Owner: Jeremy Daughhetee
 
-Readout is a small, open-source macOS menu bar system monitor that replaces the parts of iStat Menus 7 actually in daily use. Network up/down throughput is the headline feature; CPU temperature, disk usage, CPU history and memory pressure come along.
+Readout is a small, open-source macOS menu bar system monitor that replaces the parts of iStat Menus 7 actually in daily use. Network up/down throughput is the headline feature; CPU temperature, disk usage, CPU history, GPU usage and memory pressure come along.
 
 ## 1. Goals and non-goals
 
@@ -20,7 +20,7 @@ Readout is a small, open-source macOS menu bar system monitor that replaces the 
 **Non-goals (v1)**
 
 - Fan control or anything else that writes to the SMC (it would need a privileged helper).
-- Weather, time, battery, GPU-as-menu-item, alerts and notifications, desktop widgets, multi-profile settings.
+- Weather, time, battery, alerts and notifications, desktop widgets, multi-profile settings.
 - The Mac App Store (sandboxing blocks `nettop`, `ps` and AppleSMC access).
 - Support for macOS older than 26 (Tahoe).
 
@@ -45,7 +45,7 @@ Two calibration facts:
 
 ### 3.1 Menu bar items
 
-Each item is its own `NSStatusItem`, so macOS persists ⌘-drag reordering through `autosaveName`. Default order matches section 2.
+Each item is its own `NSStatusItem`, so macOS persists ⌘-drag reordering through `autosaveName`. Default order matches section 2, with GPU (added later, not an iStat item in section 2) between the CPU graph and Memory.
 
 | Item | Rendering |
 |---|---|
@@ -53,6 +53,7 @@ Each item is its own `NSStatusItem`, so macOS persists ⌘-drag reordering throu
 | CPU temp | 9 pt caption `CPU` over a value such as `126°`. Unit is °F or °C per settings. |
 | Disk | Caption `SSD` over `81%`. |
 | CPU graph | 20 columns at 1 sample/s (2 pt bars, 1 pt gaps, newest on the right), each a stacked user (blue) + system (pink) bar, inside a rounded outline. Matches iStat's density and colors in both appearances. |
+| GPU | Caption `GPU` over `37%`. Hidden on a Mac whose GPU reports no statistics. |
 | Memory | Caption `MEM` over `5%`, followed by a vertical bar filled to the pressure value. The bar turns yellow at 50% and red at 80% pressure. |
 
 Text and outlines follow the menu bar's effective appearance (light or dark), and redraw when it changes.
@@ -67,6 +68,7 @@ Clicking an item opens a borderless, non-activating `NSPanel` hosting SwiftUI. T
 | CPU temp | CPU-cluster average, GPU average, hottest sensor (name + value), fan RPM. Fan RPM is omitted on fanless Macs. |
 | Disk | Used / free / total for the boot volume. Read/write throughput summed across all block storage devices. |
 | CPU | Total, user and system %. Per-core bars, grouped into the core tiers the system reports (Performance and Efficiency through M4; Super and Performance on M5), each named from `hw.perflevelN.name`. The bars narrow so every core fits the panel. Load averages. Top 5 processes by CPU from `ps`. |
+| GPU | Usage % of the busiest GPU, with its model name. Usage history graph covering the last 2 minutes. GPU memory in use. GPU temperature. Per-process GPU use needs root, so it is not shown. |
 | Memory | Pressure %. Used, wired, compressed and cached memory. Swap used. Top 5 processes by resident memory from `ps`. |
 
 ### 3.3 Settings
@@ -137,6 +139,7 @@ Readout/
 | Top CPU / memory | `/bin/ps -Aceo pid,pcpu,rss,comm` | Panel-open only. |
 | Memory pressure | `sysctl kern.memorystatus_level` | pressure = 100 − level |
 | Memory breakdown | `host_statistics64(HOST_VM_INFO64)`, `sysctl vm.swapusage` | |
+| GPU | Each `IOAccelerator` service's `PerformanceStatistics`: `Device Utilization %` and `In use system memory`; the `model` property | Read once a second. `Device Utilization %` tracked `powermetrics` GPU active residency idle and under a Metal compute load on an M1 Ultra. Absent in virtual machines, where the item hides itself. |
 | Disk capacity | `URLResourceValues` `volumeTotalCapacity`, `volumeAvailableCapacity` (container free) and `volumeAvailableCapacityForImportantUsage` on `/`; `getattrlist(ATTR_VOL_SPACEUSED)` on `/System/Volumes/Data` | used % = (Data-volume used − purgeable) ÷ container total, where purgeable = important-usage free − container free. Matches iStat (80.41% vs iStat 80% on 2026-10-08); the container-wide figure read 81.6%. Falls back to the container-wide figure if `getattrlist` fails. |
 | Disk throughput | IOKit `IOBlockStorageDriver` `Statistics` (bytes read/written), summed over all drivers | Deltas, as with network. A detached drive lowers the sum, which reads as 0 for that tick. |
 | Temperatures | `AppleSMC` user client, read-only, `flt ` keys. CPU = mean of keys `Tp` + digit + any (P-core sensors; excludes `TpD*`). GPU = mean of keys `Tg` + digit + any. | Calibrated 2026-10-08 on M1 Ultra. iStat read 106/107/107 °F while the `Tp` mean read 107/106/104 °F, within tolerance. The IOHID `PMU tdie*` sensors read about 97 °F, about 10 °F low, so IOHID is not used. Readings outside 5–130 °C are discarded. Sampled every 2 s, not every tick, because SMC reads are synchronous kernel calls and dominated the sampling cost; key sizes and types are cached after discovery so each read is one call. Fan RPM outside 0–20 000 is discarded. `readout-probe --sensors` dumps every `T*` key. |
@@ -171,7 +174,7 @@ Runs on `macos-26` (arm64). Public repos get hosted macOS minutes at no cost.
 2. `swift format lint --strict --recursive ReadoutKit/Sources ReadoutKit/Tests App` (swift-format ships with the toolchain).
 3. `swift test --package-path ReadoutKit` (ReadoutCore and ReadoutSystem tests).
 4. `xcodegen generate`, then `xcodebuild build` for the app with ad-hoc signing (`CODE_SIGN_IDENTITY=-`).
-5. `Readout.app/Contents/MacOS/Readout --self-test`: runs every sampler for 3 ticks headlessly and exits non-zero if any non-sensor sampler returns `nil`. Sensor samplers may be `nil` on the VM runner; real-hardware sensor verification is the acceptance step in section 8.
+5. `Readout.app/Contents/MacOS/Readout --self-test`: runs every sampler for 3 ticks headlessly and exits non-zero if the network, CPU, memory or disk sampler returns `nil`. The temperature and GPU samplers may be `nil` on the VM runner; real-hardware sensor verification is the acceptance step in section 8.
 
 CI uses no secrets, so fork PRs are safe.
 

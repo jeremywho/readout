@@ -37,6 +37,15 @@ int readout_read_disk_io(uint64_t *bytes_read, uint64_t *bytes_written);
 int readout_read_volume_used(const char *path, int64_t *used);
 
 typedef struct {
+    int32_t utilization_percent;
+    int has_memory_in_use;
+    uint64_t memory_in_use;
+    char model[64];
+} readout_gpu;
+
+int readout_read_gpu(readout_gpu *out);
+
+typedef struct {
     uint32_t connection;
 } readout_smc;
 

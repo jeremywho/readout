@@ -21,6 +21,7 @@ public enum SelfTest {
         ]
         var lines = checks.map { "\($0.0): \($0.1 ? "ok" : "FAILED")" }
         lines.append("temperature: \(snapshot.temperature == nil ? "unavailable (allowed)" : "ok")")
+        lines.append("gpu: \(snapshot.gpu == nil ? "unavailable (allowed)" : "ok")")
         return SelfTestResult(passed: checks.allSatisfy(\.1), report: lines.joined(separator: "\n"))
     }
 

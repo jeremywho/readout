@@ -5,6 +5,7 @@ struct HistoryGraph: View {
     enum Series {
         case network([ThroughputSample])
         case cpu([CoreLoad])
+        case usage([Double])
     }
 
     let series: Series
@@ -34,6 +35,16 @@ struct HistoryGraph: View {
                             CGRect(
                                 x: x, y: size.height - systemHeight - userHeight, width: max(step, 1),
                                 height: userHeight)),
+                        with: .style(PanelStyle.download))
+                }
+            case .usage(let percents):
+                let step = size.width / CGFloat(max(percents.count, 1))
+                for (index, percent) in percents.enumerated() {
+                    let height = size.height * CGFloat(min(max(percent, 0), 100) / 100)
+                    context.fill(
+                        Path(
+                            CGRect(
+                                x: CGFloat(index) * step, y: size.height - height, width: max(step, 1), height: height)),
                         with: .style(PanelStyle.download))
                 }
             }

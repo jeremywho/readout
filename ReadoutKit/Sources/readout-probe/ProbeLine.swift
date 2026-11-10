@@ -16,8 +16,9 @@ enum ProbeLine {
                 String(format: "%.1f°C/%.0f°F", $0, TemperatureUnit.convert(celsius: $0, to: .fahrenheit))
             } ?? "—"
         let gpuTemperature = summary?.gpuCelsius.map { String(format: "%.1f°C", $0) } ?? "—"
+        let gpu = MenuBarText.percent(snapshot.gpu?.utilizationPercent)
         let fans = snapshot.temperature?.fanRPMs.map { String(Int($0.rounded())) }.joined(separator: ",") ?? "—"
         return
-            "\(time) net \(interface) ↑ \(network.up) ↓ \(network.down) | cpu \(cpu) | mem \(memory) | disk \(disk) | temp cpu \(cpuTemperature) gpu \(gpuTemperature) | fans \(fans)"
+            "\(time) net \(interface) ↑ \(network.up) ↓ \(network.down) | cpu \(cpu) | mem \(memory) | disk \(disk) | gpu \(gpu) | temp cpu \(cpuTemperature) gpu \(gpuTemperature) | fans \(fans)"
     }
 }

@@ -40,7 +40,10 @@ extension MetricsStore {
                     temperature: TemperatureReading(
                         summary: TemperatureSummary(
                             cpuCelsius: 52.2, gpuCelsius: 41.6, hottest: SensorValue(key: "Tp02", celsius: 58.6)),
-                        fanRPMs: [1340, 1338])))
+                        fanRPMs: [1340, 1338]),
+                    gpu: GPUReading(
+                        utilizationPercent: index == 599 ? 37 : 30 + 22 * abs(sin(t / 11)) + 10 * abs(sin(t / 3)),
+                        memoryInUseBytes: 4_210_000_000, model: "Apple M1 Ultra")))
         }
         return store
     }

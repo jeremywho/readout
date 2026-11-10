@@ -1,3 +1,4 @@
+import CReadout
 import Foundation
 import Testing
 
@@ -32,6 +33,17 @@ import Testing
         #expect(reading.groups.map(\.name) == expectedNames)
         #expect(reading.groups.map(\.cores.count) == expectedSizes)
         #expect(reading.groups.flatMap(\.cores).sorted() == Array(0..<coreCount))
+    }
+
+    @Test func gpuSamplerMatchesTheRegistryWhenAnAcceleratorReportsStatistics() {
+        var raw = readout_gpu()
+        let available = readout_read_gpu(&raw) == 0
+        let reading = GPUSampler().sample()
+        #expect((reading != nil) == available)
+        if let reading {
+            #expect((0...100).contains(reading.utilizationPercent))
+            #expect(reading.model?.isEmpty != true)
+        }
     }
 
     @Test func memorySamplerReportsPressureAndBreakdown() throws {

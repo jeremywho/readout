@@ -1,6 +1,6 @@
 # Readout
 
-A small, open-source macOS menu bar system monitor: network throughput first, plus CPU temperature, disk usage, CPU history and memory pressure.
+A small, open-source macOS menu bar system monitor: network throughput first, plus CPU temperature, disk usage, CPU history, GPU usage and memory pressure.
 
 ![Readout in the menu bar](docs/images/menubar-real.png)
 
@@ -11,9 +11,9 @@ A small, open-source macOS menu bar system monitor: network throughput first, pl
 |---|---|---|
 | ![Network panel](docs/images/panel-network-dark.png) | ![CPU panel](docs/images/panel-cpu-dark.png) | ![Memory panel](docs/images/panel-memory-dark.png) |
 
-| Disk | Temperature |
-|---|---|
-| ![Disk panel](docs/images/panel-disk-dark.png) | ![Temperature panel](docs/images/panel-temperature-dark.png) |
+| Disk | Temperature | GPU |
+|---|---|---|
+| ![Disk panel](docs/images/panel-disk-dark.png) | ![Temperature panel](docs/images/panel-temperature-dark.png) | ![GPU panel](docs/images/panel-gpu-dark.png) |
 
 ## What it shows
 
@@ -21,6 +21,7 @@ A small, open-source macOS menu bar system monitor: network throughput first, pl
 - **CPU temperature**: the average of the CPU P-core sensors, plus GPU temperature, the hottest sensor and fan speed.
 - **Disk**: startup volume usage (purgeable space counts as free) and read/write throughput.
 - **CPU**: a user/system history graph, per-core load split into the chip's core tiers, and the top processes.
+- **GPU**: usage of the GPU with a 2-minute history, GPU memory in use and GPU temperature.
 - **Memory**: memory pressure, the used/wired/compressed breakdown, swap, and the top processes.
 
 ## Install

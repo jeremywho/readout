@@ -43,6 +43,12 @@ import Testing
         #expect(count == -1 || (Int(count) == ProcessInfo.processInfo.processorCount && letters))
     }
 
+    @Test func gpuIsUnavailableOrReportsAPercentage() {
+        var gpu = readout_gpu()
+        let status = readout_read_gpu(&gpu)
+        #expect(status == -1 || (status == 0 && (0...100).contains(gpu.utilization_percent)))
+    }
+
     @Test func vmPagesAndPressureAreReadable() {
         var pages = readout_vm_pages()
         #expect(readout_read_vm_pages(&pages) == 0)

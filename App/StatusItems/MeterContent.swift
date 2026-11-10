@@ -23,6 +23,8 @@ enum MeterContentBuilder {
             return .captioned(caption: "SSD", value: MenuBarText.percent(snapshot.disk?.usedPercent))
         case .cpu:
             return .graph(loads: Array(store.cpuHistory.elements.suffix(MeterDrawing.graphColumns)))
+        case .gpu:
+            return .captioned(caption: "GPU", value: MenuBarText.percent(snapshot.gpu?.utilizationPercent))
         case .memory:
             let pressure = snapshot.memory.map { Double($0.pressurePercent) }
             return .memory(value: MenuBarText.percent(pressure), fraction: (pressure ?? 0) / 100)
