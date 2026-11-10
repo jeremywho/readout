@@ -10,13 +10,13 @@ final class StatusItemController: NSObject {
     private let panel: AnyView
     private let presenter: PanelPresenter
 
-    init(kind: MeterKind, panel: AnyView, presenter: PanelPresenter) {
+    init(kind: MeterKind, autosaveName: String, panel: AnyView, presenter: PanelPresenter) {
         self.kind = kind
         self.panel = panel
         self.presenter = presenter
         item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         super.init()
-        item.autosaveName = kind.autosaveName
+        item.autosaveName = autosaveName
         guard let button = item.button else { return }
         button.addSubview(meter)
         button.target = self

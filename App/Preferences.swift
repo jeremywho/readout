@@ -6,6 +6,8 @@ enum Preferences {
         static let temperatureUnit = "temperatureUnit"
         static let networkInterface = "networkInterface"
         static let launchAtLoginDefaultApplied = "launchAtLoginDefaultApplied"
+        static let itemGeneration = "itemGeneration"
+        static let placedItems = "placedItems"
 
         static func enabled(_ kind: MeterKind) -> String { "item.\(kind.rawValue).enabled" }
     }
@@ -31,6 +33,18 @@ enum Preferences {
         FirstRunAction(
             isDone: { UserDefaults.standard.bool(forKey: Key.launchAtLoginDefaultApplied) },
             markDone: { UserDefaults.standard.set(true, forKey: Key.launchAtLoginDefaultApplied) })
+    }
+
+    static var itemLayout: ItemLayout {
+        get {
+            ItemLayout(
+                generation: UserDefaults.standard.integer(forKey: Key.itemGeneration),
+                placed: UserDefaults.standard.stringArray(forKey: Key.placedItems) ?? [])
+        }
+        set {
+            UserDefaults.standard.set(newValue.generation, forKey: Key.itemGeneration)
+            UserDefaults.standard.set(newValue.placed, forKey: Key.placedItems)
+        }
     }
 
     static var networkInterface: String {

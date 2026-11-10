@@ -8,7 +8,7 @@ enum MeterKind: String, CaseIterable, Identifiable, Sendable {
 
     var id: String { rawValue }
 
-    var autosaveName: String { "com.daughhetee.Readout.\(rawValue)" }
+    static let autosavePrefix = "com.daughhetee.Readout"
 
     var title: String {
         switch self {

@@ -12,6 +12,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let updater = Updater()
     private let presenter = PanelPresenter()
     private var controllers: [MeterKind: StatusItemController] = [:]
+    private var itemLayout = ItemLayout()
+    private var shownKinds: Set<MeterKind>?
     private var samplingTask: Task<Void, Never>?
     private var defaultsObserver: NSObjectProtocol?
     private lazy var settingsWindow = SettingsWindowController(updater: updater)
@@ -20,6 +22,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Preferences.registerDefaults()
         Preferences.launchAtLoginDefault.perform { try SMAppService.mainApp.register() }
         preferenceFingerprint = preferencesFingerprint()
+        itemLayout = Preferences.itemLayout.placing(MeterKind.allCases.map(\.rawValue))
+        Preferences.itemLayout = itemLayout
         reconcileStatusItems()
         applyEnginePreferences()
         defaultsObserver = NotificationCenter.default.addObserver(
@@ -71,8 +75,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func refreshStatusItems() {
         let unit = Preferences.temperatureUnit
+        let shown = Set(MeterKind.allCases.filter { Preferences.isEnabled($0) && store.isAvailable($0) })
+        let rebuild = ItemLayout.needsRebuild(
+            shownBefore: shownKinds.map { Set($0.map(\.rawValue)) }, shownNow: Set(shown.map(\.rawValue)))
+        shownKinds = shown
+        if rebuild {
+            for controller in controllers.values { controller.remove() }
+            controllers = [:]
+            reconcileStatusItems()
+        }
         for (kind, controller) in controllers {
-            let visible = Preferences.isEnabled(kind) && store.isAvailable(kind)
+            let visible = shown.contains(kind)
             controller.setVisible(visible)
             if visible { controller.update(MeterContentBuilder.content(for: kind, store: store, unit: unit)) }
         }
@@ -91,6 +104,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             quit: { NSApp.terminate(nil) }
         )
         let panel = PanelHost(kind: kind, actions: actions).environment(store).environment(processes)
-        return StatusItemController(kind: kind, panel: AnyView(panel), presenter: presenter)
+        return StatusItemController(
+            kind: kind, autosaveName: itemLayout.autosaveName(prefix: MeterKind.autosavePrefix, item: kind.rawValue),
+            panel: AnyView(panel), presenter: presenter)
     }
 }

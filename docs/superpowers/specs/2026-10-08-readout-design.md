@@ -45,7 +45,7 @@ Two calibration facts:
 
 ### 3.1 Menu bar items
 
-Each item is its own `NSStatusItem`, so macOS persists ⌘-drag reordering through `autosaveName`. Default order matches section 2, with GPU (added later, not an iStat item in section 2) between the CPU graph and Memory.
+Each item is its own `NSStatusItem`, so macOS persists ⌘-drag reordering through `autosaveName`. macOS places an item that appears after its siblings at the far end of them (26 until the next launch; 27 for good, because it remembers a slot per item name). Two rules keep the group together and in order. When an update adds an item, every item gets a new `autosaveName` generation once, so macOS lays the group out afresh; this also resets a ⌘-drag arrangement of Readout's items. When an item reappears (re-enabled in Settings, or its sensor returns), all items are re-created in order. Default order matches section 2, with GPU (added later, not an iStat item in section 2) between the CPU graph and Memory.
 
 | Item | Rendering |
 |---|---|
