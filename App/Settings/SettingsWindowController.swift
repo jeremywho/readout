@@ -14,9 +14,11 @@ final class SettingsWindowController {
     func show() {
         if window == nil {
             let view = SettingsView(interfaces: Self.interfaceNames(), updates: updater.settings)
-            let window = NSWindow(contentViewController: NSHostingController(rootView: view))
+            let controller = NSHostingController(rootView: view)
+            let window = NSWindow(contentViewController: controller)
             window.title = "Readout Settings"
             window.styleMask = [.titled, .closable]
+            window.setContentSize(controller.view.fittingSize)
             window.isReleasedWhenClosed = false
             self.window = window
         }

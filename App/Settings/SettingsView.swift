@@ -50,6 +50,7 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .frame(width: 420)
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     private func setLaunchAtLogin(_ enabled: Bool) {
